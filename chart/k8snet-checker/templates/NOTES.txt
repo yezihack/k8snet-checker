@@ -1,0 +1,63 @@
+感谢安装 {{ .Chart.Name }} v{{ .Chart.Version }}！
+
+K8s Network Checker 已成功部署到命名空间: {{ .Values.namespace }}
+
+组件状态:
+-----------
+
+1. 服务器 (Server):
+   - Deployment: {{ include "k8snet-checker.fullname" . }}-server
+   - Service: {{ include "k8snet-checker.fullname" . }}-server
+   - 副本数: {{ .Values.server.replicaCount }}
+
+2. 客户端 (Client):
+   - DaemonSet: {{ include "k8snet-checker.fullname" . }}-client
+   - 将在每个节点上运行一个 Pod
+
+检查部署状态:
+-------------
+
+  kubectl get pods -n {{ .Values.namespace }} -l app.kubernetes.io/name={{ include "k8snet-checker.name" . }}
+
+查看服务器日志:
+-------------
+
+  kubectl logs -n {{ .Values.namespace }} -l app.kubernetes.io/component=server -f
+
+查看客户端日志:
+-------------
+
+  kubectl logs -n {{ .Values.namespace }} -l app.kubernetes.io/component=client -f
+
+访问 API:
+---------
+
+1. 端口转发到本地:
+
+  kubectl port-forward -n {{ .Values.namespace }} svc/{{ include "k8snet-checker.fullname" . }}-server {{ .Values.server.service.port }}:{{ .Values.server.service.port }}
+
+2. 测试 API:
+
+  # 健康检查
+  curl http://localhost:{{ .Values.server.service.port }}/api/v1/health
+
+  # 获取活跃客户端数量
+  curl http://localhost:{{ .Values.server.service.port }}/api/v1/clients/count
+
+  # 获取所有测试结果
+  curl http://localhost:{{ .Values.server.service.port }}/api/v1/results | jq .
+
+配置说明:
+---------
+
+- 服务器端口: {{ .Values.server.service.port }}
+- 心跳间隔: {{ .Values.client.env.heartbeatInterval }} 秒
+- 缓存过期: {{ .Values.server.env.cacheKeySecond }} 秒
+- 报告间隔: {{ .Values.server.env.reportInterval }} 秒
+- 日志级别: {{ .Values.server.env.logLevel }}
+
+更多信息:
+---------
+
+  文档: https://github.com/yezihack/k8snet-checker
+  问题反馈: https://github.com/yezihack/k8snet-checker/issues

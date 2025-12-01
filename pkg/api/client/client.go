@@ -12,6 +12,21 @@ import (
 	"github.com/yezihack/k8snet-checker/pkg/models"
 )
 
+const (
+	// 发送心跳到服务器
+	SEND_HEART_BEAT_URI = "/api/v1/heartbeat"
+	// 获取所有宿主机IP列表
+	GET_HOST_IPS_URI = "/api/v1/hosts"
+	// 获取所有pod IP列表
+	GET_POD_IPS_URI = "/api/v1/pods"
+	// 上报测试结果
+	REPORT_TEST_RESULT_URI = "/api/v1/test-results/hosts"
+	// 上报自定义服务测试结果
+	REPORT_POD_TEST_RESULTS_URI = "/api/v1/test-results/pods"
+	// 上报自定义服务测试结果
+	REPORT_SERVICE_TEST_RESULTS_URI = "/api/v1/test-results/service"
+)
+
 // APIClient defines the interface for client-side API interactions with the server
 type APIClient interface {
 	// SendHeartbeat sends node information to the server as a heartbeat
@@ -53,7 +68,7 @@ func NewAPIClient(serverURL string, sourceIP string) APIClient {
 
 // SendHeartbeat 发送心跳到服务器
 func (c *apiClientImpl) SendHeartbeat(info *models.NodeInfo) error {
-	url := fmt.Sprintf("%s/api/v1/heartbeat", c.serverURL)
+	url := fmt.Sprintf("%s"+SEND_HEART_BEAT_URI, c.serverURL)
 
 	// 序列化请求体
 	body, err := json.Marshal(info)
@@ -74,7 +89,7 @@ func (c *apiClientImpl) SendHeartbeat(info *models.NodeInfo) error {
 
 // GetHostIPs 从服务器获取所有宿主机IP列表
 func (c *apiClientImpl) GetHostIPs() ([]string, error) {
-	url := fmt.Sprintf("%s/api/v1/hosts", c.serverURL)
+	url := fmt.Sprintf("%s"+GET_HOST_IPS_URI, c.serverURL)
 
 	var response struct {
 		HostIPs []string `json:"host_ips"`
@@ -93,7 +108,7 @@ func (c *apiClientImpl) GetHostIPs() ([]string, error) {
 
 // GetPodIPs 从服务器获取所有Pod IP列表
 func (c *apiClientImpl) GetPodIPs() ([]string, error) {
-	url := fmt.Sprintf("%s/api/v1/pods", c.serverURL)
+	url := fmt.Sprintf("%s"+GET_POD_IPS_URI, c.serverURL)
 
 	var response struct {
 		PodIPs []string `json:"pod_ips"`
@@ -112,7 +127,7 @@ func (c *apiClientImpl) GetPodIPs() ([]string, error) {
 
 // ReportHostTestResults 上报宿主机测试结果到服务器
 func (c *apiClientImpl) ReportHostTestResults(results []models.ConnectivityResult) error {
-	url := fmt.Sprintf("%s/api/v1/test-results/hosts", c.serverURL)
+	url := fmt.Sprintf("%s"+REPORT_TEST_RESULT_URI, c.serverURL)
 
 	// 构造请求体
 	request := struct {
@@ -142,7 +157,7 @@ func (c *apiClientImpl) ReportHostTestResults(results []models.ConnectivityResul
 
 // ReportPodTestResults 上报Pod测试结果到服务器
 func (c *apiClientImpl) ReportPodTestResults(results []models.ConnectivityResult) error {
-	url := fmt.Sprintf("%s/api/v1/test-results/pods", c.serverURL)
+	url := fmt.Sprintf("%s"+REPORT_POD_TEST_RESULTS_URI, c.serverURL)
 
 	// 构造请求体
 	request := struct {
@@ -172,7 +187,7 @@ func (c *apiClientImpl) ReportPodTestResults(results []models.ConnectivityResult
 
 // ReportServiceTestResults 上报自定义服务测试结果到服务器
 func (c *apiClientImpl) ReportServiceTestResults(result *models.ConnectivityResult) error {
-	url := fmt.Sprintf("%s/api/v1/test-results/service", c.serverURL)
+	url := fmt.Sprintf("%s"+REPORT_SERVICE_TEST_RESULTS_URI, c.serverURL)
 
 	// 构造请求体
 	request := struct {

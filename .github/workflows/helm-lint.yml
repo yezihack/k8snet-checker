@@ -1,0 +1,94 @@
+name: Helm Chart Lint
+
+on:
+  pull_request:
+    paths:
+      - 'chart/**'
+      - '.github/workflows/helm-*.yml'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'chart/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.13.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.6.1
+
+      - name: List changed charts
+        id: list-changed
+        run: |
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+          if [[ -n "$changed" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Lint Helm Chart
+        if: steps.list-changed.outputs.changed == 'true'
+        run: |
+          ct lint --target-branch ${{ github.event.repository.default_branch }} \
+            --charts chart/k8snet-checker \
+            --validate-maintainers=false
+
+      - name: Helm Template Test
+        run: |
+          echo "Testing default values..."
+          helm template k8snet-checker ./chart/k8snet-checker \
+            --namespace kube-system \
+            --debug
+
+          echo "Testing with custom values..."
+          helm template k8snet-checker ./chart/k8snet-checker \
+            --namespace kube-system \
+            --set server.image.tag=v1.0.0 \
+            --set client.image.tag=v1.0.0 \
+            --set server.env.logLevel=debug \
+            --debug
+
+      - name: Validate YAML
+        run: |
+          helm template k8snet-checker ./chart/k8snet-checker \
+            --namespace kube-system > /tmp/rendered.yaml
+          
+          # 检查是否有有效的 YAML
+          if ! grep -q "kind:" /tmp/rendered.yaml; then
+            echo "Error: No Kubernetes resources found in rendered template"
+            exit 1
+          fi
+          
+          echo "✓ YAML validation passed"
+
+      - name: Check Chart Version
+        run: |
+          CHART_VERSION=$(grep '^version:' chart/k8snet-checker/Chart.yaml | awk '{print $2}')
+          APP_VERSION=$(grep '^appVersion:' chart/k8snet-checker/Chart.yaml | awk '{print $2}' | tr -d '"')
+          
+          echo "Chart Version: $CHART_VERSION"
+          echo "App Version: $APP_VERSION"
+          
+          # 验证版本格式
+          if ! [[ "$CHART_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Chart version must follow semver format (x.y.z)"
+            exit 1
+          fi
+          
+          echo "✓ Version format validation passed"

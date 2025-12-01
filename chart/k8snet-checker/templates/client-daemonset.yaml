@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "k8snet-checker.fullname" . }}-client
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "k8snet-checker.labels" . | nindent 4 }}
+    app.kubernetes.io/component: client
+spec:
+  selector:
+    matchLabels:
+      {{- include "k8snet-checker.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: client
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "k8snet-checker.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: client
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "k8snet-checker.serviceAccountName" . }}
+      hostNetwork: {{ .Values.client.hostNetwork }}
+      dnsPolicy: {{ .Values.client.dnsPolicy }}
+      containers:
+      - name: client
+        image: "{{ .Values.client.image.repository }}:{{ .Values.client.image.tag }}"
+        imagePullPolicy: {{ .Values.client.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.client.env.clientPort }}
+          protocol: TCP
+        env:
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: SERVER_URL
+          value: "http://{{ include "k8snet-checker.fullname" . }}-server.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.server.service.port }}"
+        - name: HEARTBEAT_INTERVAL
+          value: {{ .Values.client.env.heartbeatInterval | quote }}
+        - name: TEST_PORT
+          value: {{ .Values.client.env.testPort | quote }}
+        - name: CLIENT_PORT
+          value: {{ .Values.client.env.clientPort | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.client.env.logLevel | quote }}
+        {{- if .Values.client.env.customServiceName }}
+        - name: CUSTOM_SERVICE_NAME
+          value: {{ .Values.client.env.customServiceName | quote }}
+        {{- end }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        livenessProbe:
+          {{- toYaml .Values.client.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.client.readinessProbe | nindent 10 }}
+        resources:
+          {{- toYaml .Values.client.resources | nindent 10 }}
+      {{- with .Values.client.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

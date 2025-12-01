@@ -1,0 +1,150 @@
+# K8s Network Checker Helm Chart 配置
+
+# 服务器配置
+server:
+  # 副本数量
+  replicaCount: 1
+  
+  # 镜像配置
+  image:
+    repository: sgfoot/k8snet-checker-server
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  
+  # 服务配置
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  
+  # 资源限制
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # 环境变量
+  env:
+    # 缓存过期时间（秒）
+    cacheKeySecond: "15"
+    # 日志级别 (debug/info/warn/error)
+    logLevel: "info"
+    # HTTP 服务端口
+    httpPort: "8080"
+    # 报告生成间隔（秒）
+    reportInterval: "300"
+  
+  # 健康检查
+  livenessProbe:
+    httpGet:
+      path: /api/v1/health
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /api/v1/health
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# 客户端配置
+client:
+  # 镜像配置
+  image:
+    repository: sgfoot/k8snet-checker-client
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  
+  # 资源限制
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  
+  # 环境变量
+  env:
+    # 心跳间隔（秒）
+    heartbeatInterval: "5"
+    # 宿主机测试端口
+    testPort: "22"
+    # 客户端监听端口
+    clientPort: "6100"
+    # 日志级别
+    logLevel: "info"
+    # 自定义服务名称（可选）
+    customServiceName: ""
+  
+  # 健康检查
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 6100
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 6100
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  # 主机网络模式
+  hostNetwork: true
+  
+  # DNS 策略
+  dnsPolicy: ClusterFirstWithHostNet
+  
+  # 容忍度配置（允许在所有节点上运行）
+  tolerations:
+    - operator: Exists
+
+# 镜像拉取密钥
+imagePullSecrets: []
+
+# 命名空间
+namespace: toolbox
+
+# ServiceAccount 配置
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod 注解
+podAnnotations: {}
+
+# Pod 标签
+podLabels: {}
+
+# Pod 安全上下文
+podSecurityContext: {}
+
+# 安全上下文
+securityContext:
+  capabilities:
+    add:
+      - NET_RAW
+      - NET_ADMIN
+
+# 节点选择器
+nodeSelector: {}
+
+# 亲和性配置
+affinity: {}

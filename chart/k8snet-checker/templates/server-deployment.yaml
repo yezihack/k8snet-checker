@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "k8snet-checker.fullname" . }}-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "k8snet-checker.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+spec:
+  replicas: {{ .Values.server.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "k8snet-checker.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "k8snet-checker.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: server
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "k8snet-checker.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: server
+        image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
+        imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.server.service.targetPort }}
+          protocol: TCP
+        env:
+        - name: CACHE_KEY_SECOND
+          value: {{ .Values.server.env.cacheKeySecond | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.server.env.logLevel | quote }}
+        - name: HTTP_PORT
+          value: {{ .Values.server.env.httpPort | quote }}
+        - name: REPORT_INTERVAL
+          value: {{ .Values.server.env.reportInterval | quote }}
+        livenessProbe:
+          {{- toYaml .Values.server.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.server.readinessProbe | nindent 10 }}
+        resources:
+          {{- toYaml .Values.server.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
