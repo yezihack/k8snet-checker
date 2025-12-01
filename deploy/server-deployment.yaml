@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-probe-server
+  namespace: kube-system
+  labels:
+    app: pod-probe-server
+    component: server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-probe-server
+  template:
+    metadata:
+      labels:
+        app: pod-probe-server
+        component: server
+    spec:
+      containers:
+      - name: server
+        image: sgfoot/pod-probe-server:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: CACHE_KEY_SECOND
+          value: "15"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: HTTP_PORT
+          value: "8080"
+        - name: REPORT_INTERVAL
+          value: "300"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+      restartPolicy: Always

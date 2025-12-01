@@ -1,0 +1,69 @@
+# 多阶段构建 - 构建阶段
+FROM golang:1.24.0-alpine AS builder
+
+ENV GOPROXY=https://goproxy.cn,https://goproxy.io,direct
+ENV GO111MODULE=on
+
+# 设置工作目录
+WORKDIR /build
+
+# 复制 go mod 文件
+COPY go.mod go.sum ./
+
+# 下载依赖
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update
+RUN go mod download
+
+# 复制源代码
+COPY . .
+
+# 构建客户端二进制文件
+# CGO_ENABLED=0 用于静态编译
+# -ldflags="-w -s" 用于减小二进制文件大小
+# TARGETARCH 由 Docker Buildx 自动注入，支持多架构构建
+ARG TARGETOS=linux
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
+    -ldflags="-w -s" \
+    -o /build/bin/client \
+    ./cmd/client
+
+# 运行阶段 - 使用最小化的基础镜像
+FROM alpine:latest
+
+# 安装必要的运行时依赖
+# ca-certificates 用于 HTTPS 请求
+# tzdata 用于时区支持
+# iputils 用于 ping 命令
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk --no-cache add ca-certificates tzdata iputils netcat-openbsd
+
+# 设置时区为上海
+ENV TZ=Asia/Shanghai
+
+# 创建非 root 用户
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
+# 设置工作目录
+WORKDIR /app
+
+# 从构建阶段复制二进制文件
+COPY --from=builder /build/bin/client /app/client
+
+# 修改文件所有者
+RUN chown appuser:appuser /app/client
+
+# 切换到非 root 用户
+USER appuser
+
+# 暴露客户端健康检查端口
+EXPOSE 6100
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:6100/health || exit 1
+
+# 启动客户端
+ENTRYPOINT ["/app/client"]

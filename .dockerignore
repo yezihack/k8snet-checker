@@ -1,0 +1,70 @@
+# Git 相关
+.git
+.gitignore
+.gitattributes
+
+# IDE 和编辑器配置
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 构建产物
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试相关
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# 依赖和缓存
+vendor/
+.cache/
+
+# 文档
+*.md
+!README.md
+docs/
+
+# CI/CD 配置
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Kubernetes 部署文件
+deploy/
+*.yaml
+*.yml
+
+# Docker 相关
+Dockerfile*
+.dockerignore
+docker-compose.yml
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# 环境变量文件
+.env
+.env.*
+
+# Kiro 规范文件
+.kiro/
+
+# 其他
+need.md
