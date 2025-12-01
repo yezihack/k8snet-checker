@@ -38,12 +38,12 @@ jobs:
 
       - name: Lint Helm Chart
         run: |
-          ct lint --target-branch main --charts chart/k8snet-checker
+          helm lint chart/k8snet-checker
 
       - name: Helm Template Test
         run: |
           helm template k8snet-checker ./chart/k8snet-checker \
-            --namespace kube-system \
+            --namespace toolbox \
             --debug
 
   release:
