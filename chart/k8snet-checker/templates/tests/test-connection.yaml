@@ -1,3 +1,4 @@
+{{- .Value.debug -}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -15,3 +16,4 @@ spec:
     command: ['wget']
     args: ['--spider', '--timeout=5', '{{ include "k8snet-checker.fullname" . }}-server:{{ .Values.server.service.port }}/api/v1/health']
   restartPolicy: Never
+{{- end -}}
