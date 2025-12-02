@@ -3,7 +3,7 @@ name: Build and Push Docker Images
 on:
   push: # 当代码被推送（push）时触发 
     branches: 
-      - main
+      # - main
       # - develop
     tags:
       - 'v*'
