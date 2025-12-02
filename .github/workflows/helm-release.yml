@@ -4,10 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-    branches:
-      - main
-    paths:
-      - 'chart/**'
   workflow_dispatch:
 
 permissions:
@@ -28,14 +24,6 @@ jobs:
         with:
           version: v3.13.0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.6.1
-
       - name: Lint Helm Chart
         run: |
           helm lint chart/k8snet-checker
@@ -43,7 +31,7 @@ jobs:
       - name: Helm Template Test
         run: |
           helm template k8snet-checker ./chart/k8snet-checker \
-            --namespace toolbox \
+            --namespace kube-system \
             --debug
 
   release:
@@ -71,46 +59,103 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "chart_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
 
       - name: Update Chart version
         run: |
           VERSION=${{ steps.version.outputs.version }}
+          echo "Updating Chart version to $VERSION"
           sed -i "s/^version:.*/version: $VERSION/" chart/k8snet-checker/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" chart/k8snet-checker/Chart.yaml
           
           # 更新 values.yaml 中的镜像标签
-          sed -i "s/tag: \"latest\"/tag: \"v$VERSION\"/" chart/k8snet-checker/values.yaml
+          sed -i 's/tag: "latest"/tag: "v'"$VERSION"'"/' chart/k8snet-checker/values.yaml
+          
+          # 显示更新后的内容
+          echo "=== Chart.yaml ==="
+          cat chart/k8snet-checker/Chart.yaml
+          echo "=== values.yaml (image tags) ==="
+          grep -A 2 "image:" chart/k8snet-checker/values.yaml
+
+      - name: Create package directory
+        run: |
+          mkdir -p .cr-release-packages
+          ls -la
 
       - name: Package Helm Chart
         run: |
-          mkdir -p .cr-release-packages
           helm package chart/k8snet-checker -d .cr-release-packages
+          ls -la .cr-release-packages/
 
       - name: Generate Chart README
         run: |
-          cat > .cr-release-packages/README.md << 'EOF'
-          # K8s Network Checker Helm Chart
+          VERSION=${{ steps.version.outputs.version }}
+          cat > .cr-release-packages/INSTALL.md << EOF
+          # K8s Network Checker Helm Chart v${VERSION}
           
-          ## 安装
+          ## 安装方法
           
-          ```bash
-          helm repo add k8snet-checker https://github.com/yezihack/k8snet-checker/releases/download/${{ steps.version.outputs.version }}
-          helm repo update
-          helm install k8snet-checker k8snet-checker/k8snet-checker -n kube-system
-          ```
+          ### 方法 1: 直接从 Release 安装
           
-          ## 或直接从 Release 安装
+          \`\`\`bash
+          helm install k8snet-checker \\
+            https://github.com/${{ github.repository }}/releases/download/v${VERSION}/k8snet-checker-${VERSION}.tgz \\
+            -n kube-system --create-namespace
+          \`\`\`
           
-          ```bash
-          helm install k8snet-checker \
-            https://github.com/yezihack/k8snet-checker/releases/download/${{ steps.version.outputs.version }}/k8snet-checker-${{ steps.version.outputs.version }}.tgz \
+          ### 方法 2: 使用自定义配置
+          
+          \`\`\`bash
+          # 下载 Chart
+          wget https://github.com/${{ github.repository }}/releases/download/v${VERSION}/k8snet-checker-${VERSION}.tgz
+          
+          # 创建自定义配置文件
+          cat > custom-values.yaml << 'YAML'
+          server:
+            image:
+              tag: "v${VERSION}"
+            env:
+              logLevel: "info"
+          
+          client:
+            image:
+              tag: "v${VERSION}"
+            env:
+              logLevel: "info"
+          YAML
+          
+          # 安装
+          helm install k8snet-checker k8snet-checker-${VERSION}.tgz \\
+            -n kube-system --create-namespace \\
+            -f custom-values.yaml
+          \`\`\`
+          
+          ## 升级
+          
+          \`\`\`bash
+          helm upgrade k8snet-checker \\
+            https://github.com/${{ github.repository }}/releases/download/v${VERSION}/k8snet-checker-${VERSION}.tgz \\
             -n kube-system
-          ```
+          \`\`\`
+          
+          ## 验证
+          
+          \`\`\`bash
+          # 检查 Pod 状态
+          kubectl get pods -n kube-system -l app.kubernetes.io/name=k8snet-checker
+          
+          # 查看服务器日志
+          kubectl logs -n kube-system -l app.kubernetes.io/component=server -f
+          
+          # 测试 API
+          kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
+          curl http://localhost:8080/api/v1/health
+          \`\`\`
           
           ## 文档
           
-          详细文档请查看: https://github.com/yezihack/k8snet-checker/tree/main/chart/k8snet-checker
+          - [完整文档](https://github.com/${{ github.repository }}/tree/v${VERSION}/chart/k8snet-checker)
+          - [项目主页](https://github.com/${{ github.repository }})
           EOF
 
       - name: Create GitHub Release
@@ -118,77 +163,49 @@ jobs:
         with:
           files: |
             .cr-release-packages/*.tgz
-            .cr-release-packages/README.md
+            .cr-release-packages/INSTALL.md
           generate_release_notes: true
           body: |
             ## Helm Chart Release v${{ steps.version.outputs.version }}
             
-            ### 安装方法
+            ### 快速安装
             
             ```bash
-            # 直接从 Release 安装
             helm install k8snet-checker \
               https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/k8snet-checker-${{ steps.version.outputs.version }}.tgz \
-              -n kube-system
-            
-            # 或使用自定义配置
-            helm install k8snet-checker \
-              https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/k8snet-checker-${{ steps.version.outputs.version }}.tgz \
-              -n kube-system \
-              -f custom-values.yaml
+              -n kube-system --create-namespace
             ```
             
-            ### 升级方法
+            ### 验证部署
             
             ```bash
-            helm upgrade k8snet-checker \
-              https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/k8snet-checker-${{ steps.version.outputs.version }}.tgz \
-              -n kube-system
+            # 检查 Pod 状态
+            kubectl get pods -n kube-system -l app.kubernetes.io/name=k8snet-checker
+            
+            # 查看服务器日志
+            kubectl logs -n kube-system -l app.kubernetes.io/component=server
+            
+            # 测试 API
+            kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
+            curl http://localhost:8080/api/v1/health
             ```
-            
-            ### 主要变更
-            
-            请查看下方的自动生成的发布说明。
             
             ### 文档
             
-            - [Chart README](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}/chart/k8snet-checker)
-            - [项目文档](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md)
+            - 📖 [Chart README](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/chart/k8snet-checker/README.md)
+            - 📦 [安装指南](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/INSTALL.md)
+            - 🏠 [项目主页](https://github.com/${{ github.repository }})
+            
+            ### 镜像版本
+            
+            - Server: `sgfoot/k8snet-checker-server:v${{ steps.version.outputs.version }}`
+            - Client: `sgfoot/k8snet-checker-client:v${{ steps.version.outputs.version }}`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Chart to Artifact
+      - name: Upload Chart Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: helm-chart
+          name: helm-chart-${{ steps.version.outputs.version }}
           path: .cr-release-packages/*.tgz
-          retention-days: 30
-
-  # 可选: 发布到 GitHub Pages (Helm Repository)
-  publish-pages:
-    needs: release
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: v3.13.0
-
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.6.0
-        with:
-          charts_dir: chart
-          skip_existing: true
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          retention-days: 90
