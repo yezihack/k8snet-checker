@@ -1,16 +1,16 @@
 name: Build and Push Docker Images
 
 on:
-  push: # 当代码被推送（push）时触发 
-    branches: 
-      # - main
-      # - develop
-    tags:
-      - 'v*'
-  pull_request: # 当提交拉取请求时触发，仅当针对 main 分支的 PR 时才运行
+  push:
     branches:
       - main
-  workflow_dispatch: # 允许手动触发工作流
+      - develop
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 env:
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -21,7 +21,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    
+
     steps:
       # 检出代码
       - name: Checkout code
@@ -42,32 +42,35 @@ jobs:
           username: ${{ env.DOCKER_HUB_USERNAME }}
           password: ${{ env.DOCKER_HUB_TOKEN }}
 
-      # 提取元数据（标签、标记等）
+      # 提取元数据（标签、标记等）- Server
       - name: Extract metadata for Server
         id: meta-server
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.SERVER_IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            # 分支推送: main -> latest, develop -> develop
             type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
+            # PR: pr-123
+            type=ref,event=pr
+            # Tag 推送: v1.0.0 -> v1.0.0 (只生成完整版本号)
+            type=semver,pattern=v{{version}}
 
+      # 提取元数据（标签、标记等）- Client
       - name: Extract metadata for Client
         id: meta-client
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.CLIENT_IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            # 分支推送: main -> latest, develop -> develop
             type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
+            # PR: pr-123
+            type=ref,event=pr
+            # Tag 推送: v1.0.0 -> v1.0.0 (只生成完整版本号)
+            type=semver,pattern=v{{version}}
 
       # 构建并推送 Server 镜像（多架构）
       - name: Build and push Server image
@@ -100,3 +103,6 @@ jobs:
         run: |
           echo "Server Image Tags: ${{ steps.meta-server.outputs.tags }}"
           echo "Client Image Tags: ${{ steps.meta-client.outputs.tags }}"
+          echo ""
+          echo "Server Image: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.SERVER_IMAGE_NAME }}"
+          echo "Client Image: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.CLIENT_IMAGE_NAME }}"
