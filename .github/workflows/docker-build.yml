@@ -54,8 +54,9 @@ jobs:
             type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             # PR: pr-123
             type=ref,event=pr
-            # Tag 推送: v1.0.0 -> v1.0.0 (只生成完整版本号)
-            type=semver,pattern=v{{version}}
+            # Tag 推送: v1.0.0 -> 1.0.0 和 latest
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
       # 提取元数据（标签、标记等）- Client
       - name: Extract metadata for Client
@@ -69,8 +70,9 @@ jobs:
             type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             # PR: pr-123
             type=ref,event=pr
-            # Tag 推送: v1.0.0 -> v1.0.0 (只生成完整版本号)
-            type=semver,pattern=v{{version}}
+            # Tag 推送: v1.0.0 -> 1.0.0 和 latest
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
       # 构建并推送 Server 镜像（多架构）
       - name: Build and push Server image

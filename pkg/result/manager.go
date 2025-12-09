@@ -51,8 +51,9 @@ func (m *testResultManagerImpl) SaveHostTestResults(sourceIP string, results []m
 		}
 
 		testStatusMap[result.TargetIP] = models.TestStatus{
-			Ping:       result.PingStatus,
-			PortStatus: portStatus,
+			Ping:         result.PingStatus,
+			PortStatus:   portStatus,
+			TestDuration: result.TestDuration,
 		}
 	}
 
@@ -82,8 +83,9 @@ func (m *testResultManagerImpl) SavePodTestResults(sourceIP string, results []mo
 		}
 
 		testStatusMap[result.TargetIP] = models.TestStatus{
-			Ping:       result.PingStatus,
-			PortStatus: portStatus,
+			Ping:         result.PingStatus,
+			PortStatus:   portStatus,
+			TestDuration: result.TestDuration,
 		}
 	}
 

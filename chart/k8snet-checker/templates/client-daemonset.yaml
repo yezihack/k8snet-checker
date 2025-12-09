@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "k8snet-checker.fullname" . }}-client
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "k8snet-checker.labels" . | nindent 4 }}
     app.kubernetes.io/component: client
@@ -57,7 +57,7 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: SERVER_URL
-          value: "http://{{ include "k8snet-checker.fullname" . }}-server.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.server.service.port }}"
+          value: "http://{{ include "k8snet-checker.fullname" . }}-server.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.server.service.port }}"
         - name: HEARTBEAT_INTERVAL
           value: {{ .Values.client.env.heartbeatInterval | quote }}
         - name: TEST_PORT
@@ -69,6 +69,10 @@ spec:
         {{- if .Values.client.env.customServiceName }}
         - name: CUSTOM_SERVICE_NAME
           value: {{ .Values.client.env.customServiceName | quote }}
+        {{- end }}
+        {{- if .Values.client.env.customServicePort }}
+        - name: CUSTOM_SERVICE_PORT
+          value: {{ .Values.client.env.customServicePort | quote }}
         {{- end }}
         securityContext:
           {{- toYaml .Values.securityContext | nindent 10 }}

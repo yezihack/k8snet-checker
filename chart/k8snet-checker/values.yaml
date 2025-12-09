@@ -84,7 +84,9 @@ client:
     # 日志级别
     logLevel: "info"
     # 自定义服务名称（可选）
-    customServiceName: ""
+    customServiceName: "kubernetes.default.svc.cluster.local"
+    # 自定义服务端口（可选）
+    customServicePort: "443"
 
   # 健康检查
   livenessProbe:
@@ -106,7 +108,7 @@ client:
     failureThreshold: 3
 
   # 主机网络模式
-  hostNetwork: true
+  hostNetwork: false
 
   # DNS 策略
   dnsPolicy: ClusterFirstWithHostNet

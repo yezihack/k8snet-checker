@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "k8snet-checker.fullname" . }}-server
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "k8snet-checker.labels" . | nindent 4 }}
     app.kubernetes.io/component: server

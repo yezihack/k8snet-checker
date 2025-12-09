@@ -41,15 +41,16 @@ type NetworkTester interface {
 
 // networkTester 是 NetworkTester 接口的实现
 type networkTester struct {
-	sourceIP   string      // 源 IP 地址
-	hostPort   int         // 宿主机测试端口（默认 22）
-	podPort    int         // Pod 测试端口（默认 6100）
-	maxWorkers int         // 最大并发 goroutine 数量
-	logger     *zap.Logger // 日志记录器
+	sourceIP    string      // 源 IP 地址
+	hostPort    int         // 宿主机测试端口（默认 22）
+	podPort     int         // Pod 测试端口（默认 6100）
+	servicePort int         // 自定义服务测试端口（默认 80）
+	maxWorkers  int         // 最大并发 goroutine 数量
+	logger      *zap.Logger // 日志记录器
 }
 
 // NewNetworkTester 创建一个新的 NetworkTester 实例
-func NewNetworkTester(sourceIP string, hostPort, podPort, maxWorkers int, logger *zap.Logger) NetworkTester {
+func NewNetworkTester(sourceIP string, hostPort, podPort, servicePort, maxWorkers int, logger *zap.Logger) NetworkTester {
 	if maxWorkers <= 0 {
 		maxWorkers = 10 // 默认最大并发数为 10
 	}
@@ -59,13 +60,17 @@ func NewNetworkTester(sourceIP string, hostPort, podPort, maxWorkers int, logger
 	if podPort <= 0 {
 		podPort = 6100 // 默认 Pod 端口为 6100
 	}
+	if servicePort <= 0 {
+		servicePort = 80 // 默认服务端口为 80
+	}
 
 	return &networkTester{
-		sourceIP:   sourceIP,
-		hostPort:   hostPort,
-		podPort:    podPort,
-		maxWorkers: maxWorkers,
-		logger:     logger,
+		sourceIP:    sourceIP,
+		hostPort:    hostPort,
+		podPort:     podPort,
+		servicePort: servicePort,
+		maxWorkers:  maxWorkers,
+		logger:      logger,
 	}
 }
 
@@ -210,11 +215,13 @@ func (nt *networkTester) testConnectivity(targetIPs []string, port int, testType
 
 // testSingleTarget 测试单个目标的连通性
 func (nt *networkTester) testSingleTarget(targetIP string, port int) models.ConnectivityResult {
+	startTime := time.Now()
+
 	result := models.ConnectivityResult{
 		SourceIP:   nt.sourceIP,
 		TargetIP:   targetIP,
 		PortStatus: make(map[int]string),
-		Timestamp:  time.Now(),
+		Timestamp:  startTime,
 	}
 
 	// 执行 ping 测试
@@ -235,10 +242,14 @@ func (nt *networkTester) testSingleTarget(targetIP string, port int) models.Conn
 		result.PortStatus[port] = "closed"
 	}
 
+	// 记录测试耗时
+	result.TestDuration = time.Since(startTime)
+
 	nt.logger.Debug("单个目标测试完成",
 		zap.String("target_ip", targetIP),
 		zap.String("ping_status", result.PingStatus),
 		zap.String("port_status", result.PortStatus[port]),
+		zap.Duration("test_duration", result.TestDuration),
 	)
 
 	return result
@@ -250,12 +261,13 @@ func (nt *networkTester) TestServiceConnectivity(serviceName string) (*models.Co
 		return nil, fmt.Errorf("服务名称不能为空")
 	}
 
+	startTime := time.Now()
 	nt.logger.Info("开始自定义服务测试", zap.String("service_name", serviceName))
 
 	result := &models.ConnectivityResult{
 		SourceIP:   nt.sourceIP,
 		PortStatus: make(map[int]string),
-		Timestamp:  time.Now(),
+		Timestamp:  startTime,
 	}
 
 	// 执行 DNS 解析
@@ -270,6 +282,7 @@ func (nt *networkTester) TestServiceConnectivity(serviceName string) (*models.Co
 		)
 		result.TargetIP = serviceName
 		result.PingStatus = "unreachable"
+		result.TestDuration = time.Since(startTime)
 		return result, nil
 	}
 
@@ -279,6 +292,7 @@ func (nt *networkTester) TestServiceConnectivity(serviceName string) (*models.Co
 		)
 		result.TargetIP = serviceName
 		result.PingStatus = "unreachable"
+		result.TestDuration = time.Since(startTime)
 		return result, nil
 	}
 
@@ -302,21 +316,22 @@ func (nt *networkTester) TestServiceConnectivity(serviceName string) (*models.Co
 		result.Latency = 0
 	}
 
-	// 尝试测试常见端口（80, 443）
-	commonPorts := []int{80, 443}
-	for _, port := range commonPorts {
-		portOpen, _ := nt.PortTest(targetIP, port, 5*time.Second)
-		if portOpen {
-			result.PortStatus[port] = "open"
-		} else {
-			result.PortStatus[port] = "closed"
-		}
+	// 测试配置的服务端口
+	portOpen, _ := nt.PortTest(targetIP, nt.servicePort, 5*time.Second)
+	if portOpen {
+		result.PortStatus[nt.servicePort] = "open"
+	} else {
+		result.PortStatus[nt.servicePort] = "closed"
 	}
+
+	// 记录测试耗时
+	result.TestDuration = time.Since(startTime)
 
 	nt.logger.Info("自定义服务测试完成",
 		zap.String("service_name", serviceName),
 		zap.String("target_ip", targetIP),
 		zap.String("ping_status", result.PingStatus),
+		zap.Duration("test_duration", result.TestDuration),
 	)
 
 	return result, nil

@@ -13,6 +13,7 @@ type ClientConfig struct {
 	HeartbeatInterval time.Duration
 	TestPort          int
 	CustomServiceName string
+	ServicePort       int
 	ClientPort        int
 	LogLevel          string
 }
@@ -24,6 +25,7 @@ func LoadClientConfig() *ClientConfig {
 		HeartbeatInterval: getDurationEnv("HEARTBEAT_INTERVAL", 5) * time.Second,
 		TestPort:          getIntEnv("TEST_PORT", 22),
 		CustomServiceName: getEnv("CUSTOM_SERVICE_NAME", ""),
+		ServicePort:       getIntEnv("CUSTOM_SERVICE_PORT", 80),
 		ClientPort:        getIntEnv("CLIENT_PORT", 6100),
 		LogLevel:          getEnv("LOG_LEVEL", "info"),
 	}

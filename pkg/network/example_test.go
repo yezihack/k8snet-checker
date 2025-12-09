@@ -12,8 +12,8 @@ func ExampleNetworkTester() {
 	logger, _ := zap.NewDevelopment()
 
 	// 创建 NetworkTester 实例
-	// 参数：源IP, 宿主机端口, Pod端口, 最大并发数, 日志记录器
-	tester := NewNetworkTester("192.168.1.100", 22, 6100, 10, logger)
+	// 参数：源IP, 宿主机端口, Pod端口, 服务端口, 最大并发数, 日志记录器
+	tester := NewNetworkTester("192.168.1.100", 22, 6100, 80, 10, logger)
 
 	// 1. 执行 ping 测试
 	success, latency, err := tester.PingTest("192.168.1.1", 3)

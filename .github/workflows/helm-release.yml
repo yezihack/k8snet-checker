@@ -31,7 +31,7 @@ jobs:
       - name: Helm Template Test
         run: |
           helm template k8snet-checker ./chart/k8snet-checker \
-            --namespace kube-system \
+            --namespace toolbox \
             --debug
 
   release:
@@ -68,8 +68,8 @@ jobs:
           sed -i "s/^version:.*/version: $VERSION/" chart/k8snet-checker/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" chart/k8snet-checker/Chart.yaml
           
-          # 更新 values.yaml 中的镜像标签
-          sed -i 's/tag: "latest"/tag: "v'"$VERSION"'"/' chart/k8snet-checker/values.yaml
+          # 更新 values.yaml 中的镜像标签（使用不带 v 前缀的版本号）
+          sed -i 's/tag: "latest"/tag: "'"$VERSION"'"/' chart/k8snet-checker/values.yaml
           
           # 显示更新后的内容
           echo "=== Chart.yaml ==="
@@ -100,7 +100,7 @@ jobs:
           \`\`\`bash
           helm install k8snet-checker \\
             https://github.com/${{ github.repository }}/releases/download/v${VERSION}/k8snet-checker-${VERSION}.tgz \\
-            -n kube-system --create-namespace
+            -n toolbox --create-namespace
           \`\`\`
           
           ### 方法 2: 使用自定义配置
@@ -113,20 +113,20 @@ jobs:
           cat > custom-values.yaml << 'YAML'
           server:
             image:
-              tag: "v${VERSION}"
+              tag: "${VERSION}"
             env:
               logLevel: "info"
           
           client:
             image:
-              tag: "v${VERSION}"
+              tag: "${VERSION}"
             env:
               logLevel: "info"
           YAML
           
           # 安装
           helm install k8snet-checker k8snet-checker-${VERSION}.tgz \\
-            -n kube-system --create-namespace \\
+            -n toolbox --create-namespace \\
             -f custom-values.yaml
           \`\`\`
           
@@ -135,20 +135,20 @@ jobs:
           \`\`\`bash
           helm upgrade k8snet-checker \\
             https://github.com/${{ github.repository }}/releases/download/v${VERSION}/k8snet-checker-${VERSION}.tgz \\
-            -n kube-system
+            -n toolbox
           \`\`\`
           
           ## 验证
           
           \`\`\`bash
           # 检查 Pod 状态
-          kubectl get pods -n kube-system -l app.kubernetes.io/name=k8snet-checker
+          kubectl get pods -n toolbox -l app.kubernetes.io/name=k8snet-checker
           
           # 查看服务器日志
-          kubectl logs -n kube-system -l app.kubernetes.io/component=server -f
+          kubectl logs -n toolbox -l app.kubernetes.io/component=server -f
           
           # 测试 API
-          kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
+          kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080
           curl http://localhost:8080/api/v1/health
           \`\`\`
           
@@ -173,20 +173,20 @@ jobs:
             ```bash
             helm install k8snet-checker \
               https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/k8snet-checker-${{ steps.version.outputs.version }}.tgz \
-              -n kube-system --create-namespace
+              -n toolbox --create-namespace
             ```
             
             ### 验证部署
             
             ```bash
             # 检查 Pod 状态
-            kubectl get pods -n kube-system -l app.kubernetes.io/name=k8snet-checker
+            kubectl get pods -n toolbox -l app.kubernetes.io/name=k8snet-checker
             
             # 查看服务器日志
-            kubectl logs -n kube-system -l app.kubernetes.io/component=server
+            kubectl logs -n toolbox -l app.kubernetes.io/component=server
             
             # 测试 API
-            kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
+            kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080
             curl http://localhost:8080/api/v1/health
             ```
             
@@ -198,8 +198,10 @@ jobs:
             
             ### 镜像版本
             
-            - Server: `sgfoot/k8snet-checker-server:v${{ steps.version.outputs.version }}`
-            - Client: `sgfoot/k8snet-checker-client:v${{ steps.version.outputs.version }}`
+            - Server: `sgfoot/k8snet-checker-server:${{ steps.version.outputs.version }}`
+            - Client: `sgfoot/k8snet-checker-client:${{ steps.version.outputs.version }}`
+            
+            > 注意：镜像标签不包含 `v` 前缀，例如 `1.0.0` 而不是 `v1.0.0`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

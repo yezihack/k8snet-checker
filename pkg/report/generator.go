@@ -159,16 +159,19 @@ func (rg *reportGeneratorImpl) GenerateReport() (*models.NetworkReport, error) {
 // 适用于HostTestResults和PodTestResults
 func (rg *reportGeneratorImpl) calculateTestSummary(results map[string]map[string]models.TestStatus) models.TestSummary {
 	summary := models.TestSummary{
-		TotalTests:      0,
-		SuccessfulTests: 0,
-		FailedTests:     0,
-		SuccessRate:     0.0,
+		TotalTests:        0,
+		SuccessfulTests:   0,
+		FailedTests:       0,
+		SuccessRate:       0.0,
+		TotalTestDuration: 0,
+		AvgTestDuration:   0,
 	}
 
 	// 遍历所有测试结果
 	for _, targets := range results {
 		for _, status := range targets {
 			summary.TotalTests++
+			summary.TotalTestDuration += status.TestDuration
 
 			// 判断测试是否成功：ping可达且端口开放
 			if status.Ping == "reachable" && status.PortStatus == "open" {
@@ -182,6 +185,7 @@ func (rg *reportGeneratorImpl) calculateTestSummary(results map[string]map[strin
 	// 计算成功率
 	if summary.TotalTests > 0 {
 		summary.SuccessRate = float64(summary.SuccessfulTests) / float64(summary.TotalTests) * 100
+		summary.AvgTestDuration = summary.TotalTestDuration / time.Duration(summary.TotalTests)
 	}
 
 	return summary
@@ -262,6 +266,10 @@ func (rg *reportGeneratorImpl) printReport(report *models.NetworkReport) {
 	fmt.Printf("  成功: %d\n", report.HostTestSummary.SuccessfulTests)
 	fmt.Printf("  失败: %d\n", report.HostTestSummary.FailedTests)
 	fmt.Printf("  成功率: %.2f%%\n", report.HostTestSummary.SuccessRate)
+	if report.HostTestSummary.TotalTests > 0 {
+		fmt.Printf("  平均耗时: %v\n", report.HostTestSummary.AvgTestDuration)
+		fmt.Printf("  总耗时: %v\n", report.HostTestSummary.TotalTestDuration)
+	}
 	fmt.Println()
 
 	// Pod测试统计
@@ -270,6 +278,10 @@ func (rg *reportGeneratorImpl) printReport(report *models.NetworkReport) {
 	fmt.Printf("  成功: %d\n", report.PodTestSummary.SuccessfulTests)
 	fmt.Printf("  失败: %d\n", report.PodTestSummary.FailedTests)
 	fmt.Printf("  成功率: %.2f%%\n", report.PodTestSummary.SuccessRate)
+	if report.PodTestSummary.TotalTests > 0 {
+		fmt.Printf("  平均耗时: %v\n", report.PodTestSummary.AvgTestDuration)
+		fmt.Printf("  总耗时: %v\n", report.PodTestSummary.TotalTestDuration)
+	}
 	fmt.Println()
 
 	// 自定义服务测试统计

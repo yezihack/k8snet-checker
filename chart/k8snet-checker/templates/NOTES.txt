@@ -1,6 +1,6 @@
 感谢安装 {{ .Chart.Name }} v{{ .Chart.Version }}！
 
-K8s Network Checker 已成功部署到命名空间: {{ .Values.namespace }}
+K8s Network Checker 已成功部署到命名空间: {{ .Release.Namespace }}
 
 组件状态:
 -----------
@@ -17,24 +17,24 @@ K8s Network Checker 已成功部署到命名空间: {{ .Values.namespace }}
 检查部署状态:
 -------------
 
-  kubectl get pods -n {{ .Values.namespace }} -l app.kubernetes.io/name={{ include "k8snet-checker.name" . }}
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "k8snet-checker.name" . }}
 
 查看服务器日志:
 -------------
 
-  kubectl logs -n {{ .Values.namespace }} -l app.kubernetes.io/component=server -f
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/component=server -f
 
 查看客户端日志:
 -------------
 
-  kubectl logs -n {{ .Values.namespace }} -l app.kubernetes.io/component=client -f
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/component=client -f
 
 访问 API:
 ---------
 
 1. 端口转发到本地:
 
-  kubectl port-forward -n {{ .Values.namespace }} svc/{{ include "k8snet-checker.fullname" . }}-server {{ .Values.server.service.port }}:{{ .Values.server.service.port }}
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "k8snet-checker.fullname" . }}-server {{ .Values.server.service.port }}:{{ .Values.server.service.port }}
 
 2. 测试 API:
 

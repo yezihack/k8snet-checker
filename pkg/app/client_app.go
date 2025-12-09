@@ -56,6 +56,7 @@ func initializeComponents(cfg *config.ClientConfig, log *zap.Logger) (*ClientApp
 		zap.String("server_url", cfg.ServerURL),
 		zap.Duration("heartbeat_interval", cfg.HeartbeatInterval),
 		zap.Int("test_port", cfg.TestPort),
+		zap.Int("service_port", cfg.ServicePort),
 		zap.Int("client_port", cfg.ClientPort),
 		zap.String("custom_service_name", cfg.CustomServiceName),
 	)
@@ -83,8 +84,9 @@ func initializeComponents(cfg *config.ClientConfig, log *zap.Logger) (*ClientApp
 	networkTester := network.NewNetworkTester(
 		nodeInfo.PodIP,
 		cfg.TestPort,
-		6100, // Pod端口固定为6100
-		10,   // 最大并发数为10
+		6100,            // Pod端口固定为6100
+		cfg.ServicePort, // 自定义服务端口
+		10,              // 最大并发数为10
 		log,
 	)
 

@@ -15,8 +15,7 @@ spec:
       labels:
         app: pod-probe-client
         component: client
-    spec:
-      hostNetwork: true
+    spec:      
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: client
@@ -51,6 +50,8 @@ spec:
           value: "22"
         - name: CUSTOM_SERVICE_NAME
           value: ""
+        - name: CUSTOM_SERVICE_PORT
+          value: "80"
         - name: CLIENT_PORT
           value: "6100"
         - name: LOG_LEVEL

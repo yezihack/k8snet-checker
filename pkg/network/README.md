@@ -30,7 +30,7 @@
 ### 5. 自定义服务测试
 - DNS 解析验证
 - 连通性测试
-- 多端口测试（80, 443）
+- 可配置服务端口测试
 
 ### 6. 并发控制
 - 使用 semaphore 限制并发数
@@ -58,8 +58,8 @@ func main() {
     logger, _ := zap.NewDevelopment()
     
     // 创建 NetworkTester
-    // 参数：源IP, 宿主机端口, Pod端口, 最大并发数, 日志记录器
-    tester := network.NewNetworkTester("192.168.1.100", 22, 6100, 10, logger)
+    // 参数：源IP, 宿主机端口, Pod端口, 服务端口, 最大并发数, 日志记录器
+    tester := network.NewNetworkTester("192.168.1.100", 22, 6100, 80, 10, logger)
     
     // 测试宿主机连通性
     hostIPs := []string{"192.168.1.1", "192.168.1.2"}
@@ -106,6 +106,7 @@ type NetworkTester interface {
 - **sourceIP**: 源 IP 地址
 - **hostPort**: 宿主机测试端口（默认 22）
 - **podPort**: Pod 测试端口（默认 6100）
+- **servicePort**: 自定义服务测试端口（默认 80）
 - **maxWorkers**: 最大并发数（默认 10）
 
 ## 测试覆盖

@@ -13,12 +13,13 @@ type NodeInfo struct {
 
 // ConnectivityResult represents the result of a network connectivity test
 type ConnectivityResult struct {
-	SourceIP   string            `json:"source_ip"`
-	TargetIP   string            `json:"target_ip"`
-	PingStatus string            `json:"ping_status"` // "reachable" or "unreachable"
-	PortStatus map[int]string    `json:"port_status"` // port -> "open" or "closed"
-	Latency    time.Duration     `json:"latency"`
-	Timestamp  time.Time         `json:"timestamp"`
+	SourceIP     string         `json:"source_ip"`
+	TargetIP     string         `json:"target_ip"`
+	PingStatus   string         `json:"ping_status"`   // "reachable" or "unreachable"
+	PortStatus   map[int]string `json:"port_status"`   // port -> "open" or "closed"
+	Latency      time.Duration  `json:"latency"`       // ping 延迟
+	TestDuration time.Duration  `json:"test_duration"` // 整个测试耗时
+	Timestamp    time.Time      `json:"timestamp"`
 }
 
 // ClientRecord represents a client's registration record in the server cache
@@ -36,8 +37,9 @@ type VersionInfo struct {
 
 // TestStatus represents the status of a connectivity test
 type TestStatus struct {
-	Ping       string `json:"ping"`        // "reachable" or "unreachable"
-	PortStatus string `json:"port_status"` // "open" or "closed"
+	Ping         string        `json:"ping"`          // "reachable" or "unreachable"
+	PortStatus   string        `json:"port_status"`   // "open" or "closed"
+	TestDuration time.Duration `json:"test_duration"` // 测试耗时
 }
 
 // HostTestResults stores host-to-host connectivity test results
@@ -65,10 +67,12 @@ type NetworkReport struct {
 
 // TestSummary provides statistics about connectivity tests
 type TestSummary struct {
-	TotalTests      int     `json:"total_tests"`
-	SuccessfulTests int     `json:"successful_tests"`
-	FailedTests     int     `json:"failed_tests"`
-	SuccessRate     float64 `json:"success_rate"`
+	TotalTests        int           `json:"total_tests"`
+	SuccessfulTests   int           `json:"successful_tests"`
+	FailedTests       int           `json:"failed_tests"`
+	SuccessRate       float64       `json:"success_rate"`
+	AvgTestDuration   time.Duration `json:"avg_test_duration"`   // 平均测试耗时
+	TotalTestDuration time.Duration `json:"total_test_duration"` // 总测试耗时
 }
 
 // ServiceTestSummary provides statistics about custom service tests

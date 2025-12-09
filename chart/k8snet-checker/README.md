@@ -77,6 +77,7 @@ helm install k8snet-checker ./k8snet-checker \
 | `client.env.heartbeatInterval` | 心跳间隔（秒） | `5` |
 | `client.env.testPort` | 宿主机测试端口 | `22` |
 | `client.env.customServiceName` | 自定义服务名称 | `""` |
+| `client.env.customServicePort` | 自定义服务端口 | `80` |
 
 ### 资源配置
 
@@ -114,6 +115,7 @@ client:
 client:
   env:
     customServiceName: "kubernetes.default.svc.cluster.local"
+    customServicePort: "443"  # 可选，默认 80
 ```
 
 ## 使用示例

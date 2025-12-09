@@ -105,14 +105,14 @@ kubectl apply -f deploy/all-in-one.yaml
 
 ```bash
 # 检查 Pod 状态
-kubectl get pods -n kube-system -l app=k8snet-checker-server
-kubectl get pods -n kube-system -l app=k8snet-checker-client
+kubectl get pods -n toolbox -l app=k8snet-checker-server
+kubectl get pods -n toolbox -l app=k8snet-checker-client
 
 # 查看服务器日志
-kubectl logs -n kube-system -l app=k8snet-checker-server -f
+kubectl logs -n toolbox -l app=k8snet-checker-server -f
 
 # 测试 API
-kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
+kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080
 curl http://localhost:8080/api/v1/health
 ```
 
@@ -139,6 +139,7 @@ curl http://localhost:8080/api/v1/health
 | `HEARTBEAT_INTERVAL` | 心跳间隔（秒） | 5 | 否 |
 | `TEST_PORT` | 宿主机测试端口 | 22 | 否 |
 | `CUSTOM_SERVICE_NAME` | 自定义服务名称 | "" | 否 |
+| `CUSTOM_SERVICE_PORT` | 自定义服务端口 | 80 | 否 |
 | `CLIENT_PORT` | 客户端监听端口 | 6100 | 否 |
 | `LOG_LEVEL` | 日志级别 | info | 否 |
 
@@ -231,10 +232,10 @@ go test ./pkg/network
 **排查步骤**:
 ```bash
 # 查看 Pod 日志
-kubectl logs -n kube-system <client-pod-name>
+kubectl logs -n toolbox <client-pod-name>
 
 # 检查环境变量是否正确注入
-kubectl describe pod -n kube-system <client-pod-name>
+kubectl describe pod -n toolbox <client-pod-name>
 ```
 
 **常见原因**:
@@ -249,10 +250,10 @@ kubectl describe pod -n kube-system <client-pod-name>
 **排查步骤**:
 ```bash
 # 检查客户端是否有 NET_RAW 权限
-kubectl get daemonset -n kube-system k8snet-checker-client -o yaml | grep -A 5 securityContext
+kubectl get daemonset -n toolbox k8snet-checker-client -o yaml | grep -A 5 securityContext
 
 # 手动测试网络连通性
-kubectl exec -n kube-system <client-pod-name> -- ping -c 3 <target-ip>
+kubectl exec -n toolbox <client-pod-name> -- ping -c 3 <target-ip>
 ```
 
 **常见原因**:
@@ -267,13 +268,13 @@ kubectl exec -n kube-system <client-pod-name> -- ping -c 3 <target-ip>
 **排查步骤**:
 ```bash
 # 检查服务器日志
-kubectl logs -n kube-system -l app=k8snet-checker-server
+kubectl logs -n toolbox -l app=k8snet-checker-server
 
 # 检查 Service 是否正常
-kubectl get svc -n kube-system k8snet-checker-server
+kubectl get svc -n toolbox k8snet-checker-server
 
 # 测试服务器 API
-kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
+kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080
 curl http://localhost:8080/api/v1/health
 ```
 
@@ -289,10 +290,10 @@ curl http://localhost:8080/api/v1/health
 **排查步骤**:
 ```bash
 # 检查缓存过期时间配置
-kubectl get deployment -n kube-system k8snet-checker-server -o yaml | grep CACHE_KEY_SECOND
+kubectl get deployment -n toolbox k8snet-checker-server -o yaml | grep CACHE_KEY_SECOND
 
 # 检查心跳间隔配置
-kubectl get daemonset -n kube-system k8snet-checker-client -o yaml | grep HEARTBEAT_INTERVAL
+kubectl get daemonset -n toolbox k8snet-checker-client -o yaml | grep HEARTBEAT_INTERVAL
 ```
 
 **解决方案**:

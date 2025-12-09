@@ -13,46 +13,53 @@ func TestNewNetworkTester(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 
 	tests := []struct {
-		name       string
-		sourceIP   string
-		hostPort   int
-		podPort    int
-		maxWorkers int
-		wantHost   int
-		wantPod    int
-		wantWorker int
+		name        string
+		sourceIP    string
+		hostPort    int
+		podPort     int
+		servicePort int
+		maxWorkers  int
+		wantHost    int
+		wantPod     int
+		wantService int
+		wantWorker  int
 	}{
 		{
-			name:       "使用默认值",
-			sourceIP:   "192.168.1.1",
-			hostPort:   0,
-			podPort:    0,
-			maxWorkers: 0,
-			wantHost:   22,
-			wantPod:    6100,
-			wantWorker: 10,
+			name:        "使用默认值",
+			sourceIP:    "192.168.1.1",
+			hostPort:    0,
+			podPort:     0,
+			servicePort: 0,
+			maxWorkers:  0,
+			wantHost:    22,
+			wantPod:     6100,
+			wantService: 80,
+			wantWorker:  10,
 		},
 		{
-			name:       "使用自定义值",
-			sourceIP:   "192.168.1.2",
-			hostPort:   2222,
-			podPort:    8080,
-			maxWorkers: 5,
-			wantHost:   2222,
-			wantPod:    8080,
-			wantWorker: 5,
+			name:        "使用自定义值",
+			sourceIP:    "192.168.1.2",
+			hostPort:    2222,
+			podPort:     8080,
+			servicePort: 443,
+			maxWorkers:  5,
+			wantHost:    2222,
+			wantPod:     8080,
+			wantService: 443,
+			wantWorker:  5,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tester := NewNetworkTester(tt.sourceIP, tt.hostPort, tt.podPort, tt.maxWorkers, logger)
+			tester := NewNetworkTester(tt.sourceIP, tt.hostPort, tt.podPort, tt.servicePort, tt.maxWorkers, logger)
 			assert.NotNil(t, tester)
 
 			nt := tester.(*networkTester)
 			assert.Equal(t, tt.sourceIP, nt.sourceIP)
 			assert.Equal(t, tt.wantHost, nt.hostPort)
 			assert.Equal(t, tt.wantPod, nt.podPort)
+			assert.Equal(t, tt.wantService, nt.servicePort)
 			assert.Equal(t, tt.wantWorker, nt.maxWorkers)
 		})
 	}
@@ -61,7 +68,7 @@ func TestNewNetworkTester(t *testing.T) {
 // TestPingTest 测试 ping 功能
 func TestPingTest(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tester := NewNetworkTester("127.0.0.1", 22, 6100, 10, logger)
+	tester := NewNetworkTester("127.0.0.1", 22, 6100, 80, 10, logger)
 
 	tests := []struct {
 		name     string
@@ -104,7 +111,7 @@ func TestPingTest(t *testing.T) {
 // TestPortTest 测试端口连接功能
 func TestPortTest(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tester := NewNetworkTester("127.0.0.1", 22, 6100, 10, logger)
+	tester := NewNetworkTester("127.0.0.1", 22, 6100, 80, 10, logger)
 
 	tests := []struct {
 		name     string
@@ -143,7 +150,7 @@ func TestPortTest(t *testing.T) {
 // TestTestHostConnectivity 测试宿主机连通性测试
 func TestTestHostConnectivity(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tester := NewNetworkTester("127.0.0.1", 22, 6100, 10, logger)
+	tester := NewNetworkTester("127.0.0.1", 22, 6100, 80, 10, logger)
 
 	tests := []struct {
 		name    string
@@ -192,7 +199,7 @@ func TestTestHostConnectivity(t *testing.T) {
 // TestTestPodConnectivity 测试 Pod 连通性测试
 func TestTestPodConnectivity(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tester := NewNetworkTester("10.0.0.1", 22, 6100, 10, logger)
+	tester := NewNetworkTester("10.0.0.1", 22, 6100, 80, 10, logger)
 
 	tests := []struct {
 		name    string
@@ -241,7 +248,7 @@ func TestTestPodConnectivity(t *testing.T) {
 // TestTestServiceConnectivity 测试自定义服务连通性
 func TestTestServiceConnectivity(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tester := NewNetworkTester("127.0.0.1", 22, 6100, 10, logger)
+	tester := NewNetworkTester("127.0.0.1", 22, 6100, 80, 10, logger)
 
 	tests := []struct {
 		name        string
@@ -283,7 +290,7 @@ func TestTestServiceConnectivity(t *testing.T) {
 // TestConcurrentTesting 测试并发测试功能
 func TestConcurrentTesting(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tester := NewNetworkTester("10.0.0.1", 22, 6100, 3, logger) // 限制 3 个并发
+	tester := NewNetworkTester("10.0.0.1", 22, 6100, 80, 3, logger) // 限制 3 个并发
 
 	// 创建少量测试目标以避免超时
 	podIPs := []string{
