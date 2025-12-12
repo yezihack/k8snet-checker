@@ -73,7 +73,7 @@ K8s Network Checker 是一个分布式网络监控工具，用于 Kubernetes 集
 
 ### 构建镜像
 
-详细的构建说明请参考 [BUILD.md](BUILD.md)
+详细的构建说明请参考 [BUILD.md](docs/BUILD.md)
 
 ```bash
 # 构建服务器镜像

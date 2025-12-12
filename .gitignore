@@ -6,3 +6,6 @@ need.md
 DEBUG.md
 bin
 bin/*
+DEPLOY.md
+HELM_SETUP.md
+history/
