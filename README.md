@@ -1,6 +1,13 @@
 # K8s Network Checker
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/badge/Go-1.24.0+-00ADD8?logo=go)](https://go.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Hub-2496ED?logo=docker)](https://hub.docker.com/u/sgfoot)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.20+-326CE5?logo=kubernetes)](https://kubernetes.io/)
+
 K8s Network Checker 是一个分布式网络监控工具，用于 Kubernetes 集群的网络连通性检测。系统采用客户端-服务器架构，通过在每个节点上运行客户端 Pod 来收集和测试网络连通性信息，服务器端负责聚合数据、管理客户端状态，并提供查询接口以生成网络连通性报告。
+
+[English](README_EN.md) | 中文文档
 
 ## 功能特性
 
@@ -104,14 +111,7 @@ helm install k8snet-checker ./chart/k8snet-checker -n kube-system
 #### 方法 2: 使用 kubectl
 
 ```bash
-# 部署服务器
-kubectl apply -f deploy/server-deployment.yaml
-kubectl apply -f deploy/server-service.yaml
-
-# 部署客户端
-kubectl apply -f deploy/client-daemonset.yaml
-
-# 或者使用一键部署
+# 使用一键部署
 kubectl apply -f deploy/all-in-one.yaml
 ```
 
@@ -178,6 +178,39 @@ curl http://localhost:8080/api/v1/health
 - `GET /api/v1/clients/count` - 获取活跃客户端数量
 - `GET /api/v1/results` - 获取所有测试结果汇总
 - `GET /api/v1/health` - 健康检查
+
+#### Get Network Report
+
+```bash
+curl http://localhost:8080/api/v1/results
+```
+
+Response:
+
+```json
+{
+  "timestamp": "2025-12-12T21:00:00Z",
+  "active_client_count": 3,
+  "host_ips": ["192.168.1.10", "192.168.1.11", "192.168.1.12"],
+  "pod_ips": ["10.42.0.1", "10.42.0.2", "10.42.0.3"],
+  "host_test_summary": {
+    "total_tests": 6,
+    "successful_tests": 6,
+    "failed_tests": 0,
+    "success_rate": 100.0,
+    "avg_test_duration": "1.85s",
+    "total_test_duration": "11.10s"
+  },
+  "pod_test_summary": {
+    "total_tests": 6,
+    "successful_tests": 5,
+    "failed_tests": 1,
+    "success_rate": 83.33,
+    "avg_test_duration": "1.92s",
+    "total_test_duration": "11.52s"
+  }
+}
+```
 
 ## 项目结构
 
