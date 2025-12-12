@@ -3,6 +3,27 @@ entries:
   k8snet-checker:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2025-12-12T12:32:34.077660585Z"
+    description: Kubernetes 集群网络连通性检测工具
+    digest: e9bba90d489e33f365c7afad071bd42559458bdcc02fac07e6c4bd23ea7bf75c
+    home: https://github.com/yezihack/k8snet-checker
+    keywords:
+    - kubernetes
+    - network
+    - monitoring
+    - connectivity
+    maintainers:
+    - email: freeit@126.com
+      name: sgfoot
+    name: k8snet-checker
+    sources:
+    - https://github.com/yezihack/k8snet-checker
+    type: application
+    urls:
+    - https://github.com/yezihack/k8snet-checker/releases/download/k8snet-checker-1.0.1/k8snet-checker-1.0.1.tgz
+    version: 1.0.1
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2025-12-12T18:59:10.820287297+08:00"
     description: Kubernetes 集群网络连通性检测工具
     digest: 7ea4226609d878503006867783108a821798d674706beac758756de23bf949ae
@@ -22,4 +43,4 @@ entries:
     urls:
     - https://yezihack.github.io/k8snet-checker/k8snet-checker-1.0.0.tgz
     version: 1.0.0
-generated: "2025-12-12T18:59:10.817994697+08:00"
+generated: "2025-12-12T12:32:34.077670885Z"
