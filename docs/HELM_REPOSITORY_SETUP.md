@@ -15,6 +15,7 @@ chmod +x scripts/quick-helm-setup.sh
 ```
 
 脚本会自动完成以下操作：
+
 1. 打包 Helm Chart
 2. 创建 gh-pages 分支（如果不存在）
 3. 生成 index.yaml
@@ -100,6 +101,7 @@ git checkout main
 ### 手动触发
 
 在 GitHub 仓库页面：
+
 1. 进入 Actions 标签
 2. 选择 "Release Helm Charts to GitHub Pages"
 3. 点击 "Run workflow"
