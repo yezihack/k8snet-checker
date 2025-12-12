@@ -228,7 +228,7 @@ func (nt *networkTester) testSingleTarget(targetIP string, port int) models.Conn
 	pingSuccess, latency, _ := nt.PingTest(targetIP, 3)
 	if pingSuccess {
 		result.PingStatus = "reachable"
-		result.Latency = latency
+		result.Latency = models.Duration(latency)
 	} else {
 		result.PingStatus = "unreachable"
 		result.Latency = 0
@@ -243,13 +243,13 @@ func (nt *networkTester) testSingleTarget(targetIP string, port int) models.Conn
 	}
 
 	// 记录测试耗时
-	result.TestDuration = time.Since(startTime)
+	result.TestDuration = models.Duration(time.Since(startTime))
 
 	nt.logger.Debug("单个目标测试完成",
 		zap.String("target_ip", targetIP),
 		zap.String("ping_status", result.PingStatus),
 		zap.String("port_status", result.PortStatus[port]),
-		zap.Duration("test_duration", result.TestDuration),
+		zap.String("test_duration", result.TestDuration.String()),
 	)
 
 	return result
@@ -282,7 +282,7 @@ func (nt *networkTester) TestServiceConnectivity(serviceName string) (*models.Co
 		)
 		result.TargetIP = serviceName
 		result.PingStatus = "unreachable"
-		result.TestDuration = time.Since(startTime)
+		result.TestDuration = models.Duration(time.Since(startTime))
 		return result, nil
 	}
 
@@ -292,7 +292,7 @@ func (nt *networkTester) TestServiceConnectivity(serviceName string) (*models.Co
 		)
 		result.TargetIP = serviceName
 		result.PingStatus = "unreachable"
-		result.TestDuration = time.Since(startTime)
+		result.TestDuration = models.Duration(time.Since(startTime))
 		return result, nil
 	}
 
@@ -310,7 +310,7 @@ func (nt *networkTester) TestServiceConnectivity(serviceName string) (*models.Co
 	pingSuccess, latency, _ := nt.PingTest(targetIP, 3)
 	if pingSuccess {
 		result.PingStatus = "reachable"
-		result.Latency = latency
+		result.Latency = models.Duration(latency)
 	} else {
 		result.PingStatus = "unreachable"
 		result.Latency = 0
@@ -325,13 +325,13 @@ func (nt *networkTester) TestServiceConnectivity(serviceName string) (*models.Co
 	}
 
 	// 记录测试耗时
-	result.TestDuration = time.Since(startTime)
+	result.TestDuration = models.Duration(time.Since(startTime))
 
 	nt.logger.Info("自定义服务测试完成",
 		zap.String("service_name", serviceName),
 		zap.String("target_ip", targetIP),
 		zap.String("ping_status", result.PingStatus),
-		zap.Duration("test_duration", result.TestDuration),
+		zap.Duration("test_duration", time.Duration(result.TestDuration)),
 	)
 
 	return result, nil

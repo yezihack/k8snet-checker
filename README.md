@@ -92,7 +92,7 @@ docker build -t sgfoot/k8snet-checker-client:latest -f Dockerfile.client .
 ```bash
 # 添加 Helm 仓库
 helm repo add k8snet-checker https://yezihack.github.io/k8snet-checker
-helm repo update
+helm repo update k8snet-checker
 helm install k8snet-checker k8snet-checker/k8snet-checker -n kube-system
 
 # 或者从本地安装

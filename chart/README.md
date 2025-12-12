@@ -7,6 +7,11 @@
 ### 安装
 
 ```bash
+# 添加 Helm 仓库
+helm repo add k8snet-checker https://yezihack.github.io/k8snet-checker
+helm repo update
+helm install k8snet-checker k8snet-checker/k8snet-checker -n kube-system
+
 # 从本地安装
 helm install k8snet-checker ./k8snet-checker -n kube-system
 

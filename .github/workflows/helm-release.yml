@@ -171,6 +171,13 @@ jobs:
             ### 快速安装
             
             ```bash
+            # 安装 Helm Char
+            helm repo add k8snet-checker https://yezihack.github.io/k8snet-checker
+            helm repo update
+            helm install k8snet-checker k8snet-checker/k8snet-checker -n kube-system
+
+
+            # 使用 Chart 包装
             helm install k8snet-checker \
               https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/k8snet-checker-${{ steps.version.outputs.version }}.tgz \
               -n kube-system --create-namespace

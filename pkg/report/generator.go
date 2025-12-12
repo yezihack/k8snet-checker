@@ -185,7 +185,7 @@ func (rg *reportGeneratorImpl) calculateTestSummary(results map[string]map[strin
 	// 计算成功率
 	if summary.TotalTests > 0 {
 		summary.SuccessRate = float64(summary.SuccessfulTests) / float64(summary.TotalTests) * 100
-		summary.AvgTestDuration = summary.TotalTestDuration / time.Duration(summary.TotalTests)
+		summary.AvgTestDuration = models.Duration(time.Duration(summary.TotalTestDuration) / time.Duration(summary.TotalTests))
 	}
 
 	return summary

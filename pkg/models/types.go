@@ -1,6 +1,68 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+)
+
+// Duration 自定义 Duration 类型，用于人性化的 JSON 序列化
+type Duration time.Duration
+
+// MarshalJSON 实现 JSON 序列化，输出人性化的时间格式
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.String())
+}
+
+// UnmarshalJSON 实现 JSON 反序列化
+func (d *Duration) UnmarshalJSON(b []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*d = Duration(time.Duration(value))
+		return nil
+	case string:
+		tmp, err := time.ParseDuration(value)
+		if err != nil {
+			return err
+		}
+		*d = Duration(tmp)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration")
+	}
+}
+
+// String 返回人性化的时间字符串
+func (d Duration) String() string {
+	duration := time.Duration(d)
+
+	// 小于 1 微秒
+	if duration < time.Microsecond {
+		return fmt.Sprintf("%dns", duration.Nanoseconds())
+	}
+
+	// 小于 1 毫秒
+	if duration < time.Millisecond {
+		return fmt.Sprintf("%.2fµs", float64(duration.Nanoseconds())/1000.0)
+	}
+
+	// 小于 1 秒
+	if duration < time.Second {
+		return fmt.Sprintf("%.2fms", float64(duration.Nanoseconds())/1000000.0)
+	}
+
+	// 小于 1 分钟
+	if duration < time.Minute {
+		return fmt.Sprintf("%.2fs", duration.Seconds())
+	}
+
+	// 大于等于 1 分钟
+	return duration.String()
+}
 
 // NodeInfo represents the information about a Kubernetes node and pod
 type NodeInfo struct {
@@ -17,8 +79,8 @@ type ConnectivityResult struct {
 	TargetIP     string         `json:"target_ip"`
 	PingStatus   string         `json:"ping_status"`   // "reachable" or "unreachable"
 	PortStatus   map[int]string `json:"port_status"`   // port -> "open" or "closed"
-	Latency      time.Duration  `json:"latency"`       // ping 延迟
-	TestDuration time.Duration  `json:"test_duration"` // 整个测试耗时
+	Latency      Duration       `json:"latency"`       // ping 延迟
+	TestDuration Duration       `json:"test_duration"` // 整个测试耗时
 	Timestamp    time.Time      `json:"timestamp"`
 }
 
@@ -37,9 +99,9 @@ type VersionInfo struct {
 
 // TestStatus represents the status of a connectivity test
 type TestStatus struct {
-	Ping         string        `json:"ping"`          // "reachable" or "unreachable"
-	PortStatus   string        `json:"port_status"`   // "open" or "closed"
-	TestDuration time.Duration `json:"test_duration"` // 测试耗时
+	Ping         string   `json:"ping"`          // "reachable" or "unreachable"
+	PortStatus   string   `json:"port_status"`   // "open" or "closed"
+	TestDuration Duration `json:"test_duration"` // 测试耗时
 }
 
 // HostTestResults stores host-to-host connectivity test results
@@ -67,12 +129,12 @@ type NetworkReport struct {
 
 // TestSummary provides statistics about connectivity tests
 type TestSummary struct {
-	TotalTests        int           `json:"total_tests"`
-	SuccessfulTests   int           `json:"successful_tests"`
-	FailedTests       int           `json:"failed_tests"`
-	SuccessRate       float64       `json:"success_rate"`
-	AvgTestDuration   time.Duration `json:"avg_test_duration"`   // 平均测试耗时
-	TotalTestDuration time.Duration `json:"total_test_duration"` // 总测试耗时
+	TotalTests        int      `json:"total_tests"`
+	SuccessfulTests   int      `json:"successful_tests"`
+	FailedTests       int      `json:"failed_tests"`
+	SuccessRate       float64  `json:"success_rate"`
+	AvgTestDuration   Duration `json:"avg_test_duration"`   // 平均测试耗时
+	TotalTestDuration Duration `json:"total_test_duration"` // 总测试耗时
 }
 
 // ServiceTestSummary provides statistics about custom service tests
