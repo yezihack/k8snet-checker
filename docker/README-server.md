@@ -1,8 +1,10 @@
 # K8s Network Checker - Server
 
+[![GitHub](https://img.shields.io/badge/GitHub-k8snet--checker-blue?logo=github)](https://github.com/yezihack/k8snet-checker)
 [![Docker Image Version](https://img.shields.io/docker/v/sgfoot/k8snet-checker-server?sort=semver)](https://hub.docker.com/r/sgfoot/k8snet-checker-server)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sgfoot/k8snet-checker-server/latest)](https://hub.docker.com/r/sgfoot/k8snet-checker-server)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sgfoot/k8snet-checker-server)](https://hub.docker.com/r/sgfoot/k8snet-checker-server)
+[![License](https://img.shields.io/github/license/yezihack/k8snet-checker)](https://github.com/yezihack/k8snet-checker/blob/main/LICENSE)
 
 K8s Network Checker 的服务器端组件，用于聚合网络测试数据并提供查询 API。
 
@@ -12,23 +14,12 @@ K8s Network Checker 的服务器端组件，用于聚合网络测试数据并提
 
 ```bash
 # 使用 Helm（推荐）
-helm install k8snet-checker \
-  https://github.com/yezihack/k8snet-checker/releases/download/v0.1.0/k8snet-checker-0.1.0.tgz \
-  -n kube-system --create-namespace
+helm repo add k8snet-checker https://yezihack.github.io/k8snet-checker
+helm repo update
+helm install k8snet-checker k8snet-checker/k8snet-checker -n kube-system
 
 # 或使用 kubectl
 kubectl apply -f https://raw.githubusercontent.com/yezihack/k8snet-checker/main/deploy/all-in-one.yaml
-```
-
-### 单独运行（测试）
-
-```bash
-docker run -d \
-  --name k8snet-checker-server \
-  -p 8080:8080 \
-  -e LOG_LEVEL=info \
-  -e CACHE_KEY_SECOND=15 \
-  sgfoot/k8snet-checker-server:latest
 ```
 
 ## 环境变量
@@ -80,14 +71,17 @@ curl http://localhost:8080/api/v1/health
 ## 资源要求
 
 **最小配置**：
+
 - CPU: 50m
 - Memory: 64Mi
 
 **推荐配置**：
+
 - CPU: 100m
 - Memory: 128Mi
 
 **生产环境**（大规模集群）：
+
 - CPU: 200m
 - Memory: 256Mi
 
@@ -161,22 +155,6 @@ spec:
           periodSeconds: 10
 ```
 
-### Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  server:
-    image: sgfoot/k8snet-checker-server:latest
-    ports:
-      - "8080:8080"
-    environment:
-      - LOG_LEVEL=info
-      - CACHE_KEY_SECOND=15
-      - REPORT_INTERVAL=300
-    restart: unless-stopped
-```
-
 ## 故障排查
 
 ### 查看日志
@@ -226,8 +204,8 @@ MIT License
 
 ## 联系方式
 
-- GitHub: https://github.com/yezihack/k8snet-checker
-- Issues: https://github.com/yezihack/k8snet-checker/issues
+- GitHub: <https://github.com/yezihack/k8snet-checker>
+- Issues: <https://github.com/yezihack/k8snet-checker/issues>
 
 ## 相关镜像
 

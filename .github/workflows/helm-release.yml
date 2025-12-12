@@ -31,7 +31,7 @@ jobs:
       - name: Helm Template Test
         run: |
           helm template k8snet-checker ./chart/k8snet-checker \
-            --namespace toolbox \
+            --namespace kube-system \
             --debug
 
   release:
@@ -100,7 +100,7 @@ jobs:
           \`\`\`bash
           helm install k8snet-checker \\
             https://github.com/${{ github.repository }}/releases/download/v${VERSION}/k8snet-checker-${VERSION}.tgz \\
-            -n toolbox --create-namespace
+            -n kube-system --create-namespace
           \`\`\`
           
           ### 方法 2: 使用自定义配置
@@ -126,7 +126,7 @@ jobs:
           
           # 安装
           helm install k8snet-checker k8snet-checker-${VERSION}.tgz \\
-            -n toolbox --create-namespace \\
+            -n kube-system --create-namespace \\
             -f custom-values.yaml
           \`\`\`
           
@@ -135,20 +135,20 @@ jobs:
           \`\`\`bash
           helm upgrade k8snet-checker \\
             https://github.com/${{ github.repository }}/releases/download/v${VERSION}/k8snet-checker-${VERSION}.tgz \\
-            -n toolbox
+            -n kube-system
           \`\`\`
           
           ## 验证
           
           \`\`\`bash
           # 检查 Pod 状态
-          kubectl get pods -n toolbox -l app.kubernetes.io/name=k8snet-checker
+          kubectl get pods -n kube-system -l app.kubernetes.io/name=k8snet-checker
           
           # 查看服务器日志
-          kubectl logs -n toolbox -l app.kubernetes.io/component=server -f
+          kubectl logs -n kube-system -l app.kubernetes.io/component=server -f
           
           # 测试 API
-          kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080
+          kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
           curl http://localhost:8080/api/v1/health
           \`\`\`
           
@@ -173,20 +173,20 @@ jobs:
             ```bash
             helm install k8snet-checker \
               https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/k8snet-checker-${{ steps.version.outputs.version }}.tgz \
-              -n toolbox --create-namespace
+              -n kube-system --create-namespace
             ```
             
             ### 验证部署
             
             ```bash
             # 检查 Pod 状态
-            kubectl get pods -n toolbox -l app.kubernetes.io/name=k8snet-checker
+            kubectl get pods -n kube-system -l app.kubernetes.io/name=k8snet-checker
             
             # 查看服务器日志
-            kubectl logs -n toolbox -l app.kubernetes.io/component=server
+            kubectl logs -n kube-system -l app.kubernetes.io/component=server
             
             # 测试 API
-            kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080
+            kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
             curl http://localhost:8080/api/v1/health
             ```
             

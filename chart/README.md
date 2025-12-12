@@ -8,16 +8,16 @@
 
 ```bash
 # 从本地安装
-helm install k8snet-checker ./k8snet-checker -n toolbox
+helm install k8snet-checker ./k8snet-checker -n kube-system
 
 # 查看状态
-kubectl get pods -n toolbox -l app.kubernetes.io/name=k8snet-checker
+kubectl get pods -n kube-system -l app.kubernetes.io/name=k8snet-checker
 ```
 
 ### 卸载
 
 ```bash
-helm uninstall k8snet-checker -n toolbox
+helm uninstall k8snet-checker -n kube-system
 ```
 
 ## 文档

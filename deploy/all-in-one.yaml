@@ -3,25 +3,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pod-probe-server
+  name: k8snet-checker-server
   namespace: kube-system
   labels:
-    app: pod-probe-server
-    component: server
+    app: k8snet-checker-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pod-probe-server
+      app: k8snet-checker-server
   template:
     metadata:
       labels:
-        app: pod-probe-server
-        component: server
+        app: k8snet-checker-server
     spec:
       containers:
       - name: server
-        image: sgfoot/pod-probe-server:latest
+        image: sgfoot/k8snet-checker-server:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
@@ -66,15 +64,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: pod-probe-server
+  name: k8snet-checker-server
   namespace: kube-system
   labels:
-    app: pod-probe-server
-    component: server
+    app: k8snet-checker-server
 spec:
   type: ClusterIP
   selector:
-    app: pod-probe-server
+    app: k8snet-checker-server
   ports:
   - port: 8080
     targetPort: 8080
@@ -87,25 +84,23 @@ spec:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: pod-probe-client
+  name: k8snet-checker-client
   namespace: kube-system
   labels:
-    app: pod-probe-client
-    component: client
+    app: k8snet-checker-client
 spec:
   selector:
     matchLabels:
-      app: pod-probe-client
+      app: k8snet-checker-client
   template:
     metadata:
       labels:
-        app: pod-probe-client
-        component: client
+        app: k8snet-checker-client
     spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: client
-        image: sgfoot/pod-probe-client:latest
+        image: sgfoot/k8snet-checker-client:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6100
@@ -129,7 +124,7 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: SERVER_URL
-          value: "http://pod-probe-server.kube-system.svc.cluster.local:8080"
+          value: "http://k8snet-checker-server.kube-system.svc.cluster.local:8080"
         - name: HEARTBEAT_INTERVAL
           value: "5"
         - name: TEST_PORT

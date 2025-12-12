@@ -40,7 +40,7 @@ git clone https://github.com/yezihack/k8snet-checker.git
 cd k8snet-checker/chart
 
 # 安装 Chart
-helm install k8snet-checker ./k8snet-checker -n toolbox
+helm install k8snet-checker ./k8snet-checker -n kube-system
 ```
 
 ### 自定义安装
@@ -48,12 +48,12 @@ helm install k8snet-checker ./k8snet-checker -n toolbox
 ```bash
 # 使用自定义 values 文件
 helm install k8snet-checker ./k8snet-checker \
-  -n toolbox \
+  -n kube-system \
   -f custom-values.yaml
 
 # 或使用 --set 参数
 helm install k8snet-checker ./k8snet-checker \
-  -n toolbox \
+  -n kube-system \
   --set server.image.tag=v1.0.0 \
   --set client.image.tag=v1.0.0
 ```
@@ -64,7 +64,7 @@ helm install k8snet-checker ./k8snet-checker \
 
 | 参数 | 描述 | 默认值 |
 |------|------|--------|
-| `namespace` | 部署命名空间 | `toolbox` |
+| `namespace` | 部署命名空间 | `kube-system` |
 | `server.replicaCount` | 服务器副本数 | `1` |
 | `server.image.repository` | 服务器镜像仓库 | `sgfoot/k8snet-checker-server` |
 | `server.image.tag` | 服务器镜像标签 | `latest` |
@@ -123,7 +123,7 @@ client:
 ### 基本安装
 
 ```bash
-helm install k8snet-checker ./k8snet-checker -n toolbox
+helm install k8snet-checker ./k8snet-checker -n kube-system
 ```
 
 ### 生产环境配置
@@ -162,7 +162,7 @@ client:
 
 ```bash
 helm install k8snet-checker ./k8snet-checker \
-  -n toolbox \
+  -n kube-system \
   -f production-values.yaml
 ```
 
@@ -170,7 +170,7 @@ helm install k8snet-checker ./k8snet-checker \
 
 ```bash
 helm install k8snet-checker ./k8snet-checker \
-  -n toolbox \
+  -n kube-system \
   --set server.env.logLevel=debug \
   --set client.env.logLevel=debug \
   --set server.image.tag=dev \
@@ -182,26 +182,26 @@ helm install k8snet-checker ./k8snet-checker \
 ### 检查 Pod 状态
 
 ```bash
-kubectl get pods -n toolbox -l app.kubernetes.io/name=k8snet-checker
+kubectl get pods -n kube-system -l app.kubernetes.io/name=k8snet-checker
 ```
 
 ### 查看服务器日志
 
 ```bash
-kubectl logs -n toolbox -l app.kubernetes.io/component=server -f
+kubectl logs -n kube-system -l app.kubernetes.io/component=server -f
 ```
 
 ### 查看客户端日志
 
 ```bash
-kubectl logs -n toolbox -l app.kubernetes.io/component=client -f
+kubectl logs -n kube-system -l app.kubernetes.io/component=client -f
 ```
 
 ### 测试 API
 
 ```bash
 # 端口转发
-kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080
+kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
 
 # 健康检查
 curl http://localhost:8080/api/v1/health
@@ -218,21 +218,21 @@ curl http://localhost:8080/api/v1/results | jq .
 ```bash
 # 升级到新版本
 helm upgrade k8snet-checker ./k8snet-checker \
-  -n toolbox \
+  -n kube-system \
   --set server.image.tag=v1.1.0 \
   --set client.image.tag=v1.1.0
 
 # 查看升级历史
-helm history k8snet-checker -n toolbox
+helm history k8snet-checker -n kube-system
 
 # 回滚到上一个版本
-helm rollback k8snet-checker -n toolbox
+helm rollback k8snet-checker -n kube-system
 ```
 
 ## 卸载
 
 ```bash
-helm uninstall k8snet-checker -n toolbox
+helm uninstall k8snet-checker -n kube-system
 ```
 
 ## 故障排查
@@ -242,13 +242,13 @@ helm uninstall k8snet-checker -n toolbox
 检查服务器 Service 是否正常：
 
 ```bash
-kubectl get svc -n toolbox k8snet-checker-server
+kubectl get svc -n kube-system k8snet-checker-server
 ```
 
 检查客户端环境变量：
 
 ```bash
-kubectl describe pod -n toolbox <client-pod-name> | grep SERVER_URL
+kubectl describe pod -n kube-system <client-pod-name> | grep SERVER_URL
 ```
 
 ### 网络测试失败
@@ -256,7 +256,7 @@ kubectl describe pod -n toolbox <client-pod-name> | grep SERVER_URL
 检查客户端权限：
 
 ```bash
-kubectl get daemonset -n toolbox k8snet-checker-client -o yaml | grep -A 5 securityContext
+kubectl get daemonset -n kube-system k8snet-checker-client -o yaml | grep -A 5 securityContext
 ```
 
 确保客户端有 `NET_RAW` 和 `NET_ADMIN` 权限。
@@ -266,7 +266,7 @@ kubectl get daemonset -n toolbox k8snet-checker-client -o yaml | grep -A 5 secur
 检查心跳间隔和缓存过期时间配置：
 
 ```bash
-helm get values k8snet-checker -n toolbox
+helm get values k8snet-checker -n kube-system
 ```
 
 确保 `heartbeatInterval` < `cacheKeySecond`。

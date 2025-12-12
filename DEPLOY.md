@@ -19,7 +19,7 @@
 
 - **Kubernetes 集群**: v1.20 或更高版本
 - **kubectl**: 已配置并可访问集群
-- **权限**: 需要在 `toolbox` 命名空间创建资源的权限
+- **权限**: 需要在 `kube-system` 命名空间创建资源的权限
 - **镜像**: 已构建的 Docker 镜像（参考 [BUILD.md](BUILD.md)）
 
 ### 验证集群状态
@@ -32,7 +32,7 @@ kubectl cluster-info
 kubectl get nodes
 
 # 检查命名空间
-kubectl get namespace toolbox
+kubectl get namespace kube-system
 ```
 
 ## 快速部署
@@ -44,12 +44,12 @@ kubectl get namespace toolbox
 kubectl apply -f deploy/all-in-one.yaml
 
 # 等待 Pod 就绪
-kubectl wait --for=condition=ready pod -l app=k8snet-checker-server -n toolbox --timeout=60s
-kubectl wait --for=condition=ready pod -l app=k8snet-checker-client -n toolbox --timeout=60s
+kubectl wait --for=condition=ready pod -l app=k8snet-checker-server -n kube-system --timeout=60s
+kubectl wait --for=condition=ready pod -l app=k8snet-checker-client -n kube-system --timeout=60s
 
 # 查看部署状态
-kubectl get all -n toolbox -l component=server
-kubectl get all -n toolbox -l component=client
+kubectl get all -n kube-system -l component=server
+kubectl get all -n kube-system -l component=client
 ```
 
 ## 分步部署
@@ -63,10 +63,10 @@ kubectl get all -n toolbox -l component=client
 kubectl apply -f deploy/server-deployment.yaml
 
 # 查看 Deployment 状态
-kubectl get deployment -n toolbox k8snet-checker-server
+kubectl get deployment -n kube-system k8snet-checker-server
 
 # 查看 Pod 状态
-kubectl get pods -n toolbox -l app=k8snet-checker-server
+kubectl get pods -n kube-system -l app=k8snet-checker-server
 ```
 
 #### 1.2 创建 Service
@@ -76,20 +76,20 @@ kubectl get pods -n toolbox -l app=k8snet-checker-server
 kubectl apply -f deploy/server-service.yaml
 
 # 查看 Service 状态
-kubectl get svc -n toolbox k8snet-checker-server
+kubectl get svc -n kube-system k8snet-checker-server
 
 # 查看 Service 详细信息
-kubectl describe svc -n toolbox k8snet-checker-server
+kubectl describe svc -n kube-system k8snet-checker-server
 ```
 
 #### 1.3 验证服务器
 
 ```bash
 # 查看服务器日志
-kubectl logs -n toolbox -l app=k8snet-checker-server
+kubectl logs -n kube-system -l app=k8snet-checker-server
 
 # 端口转发测试
-kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080
+kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080
 
 # 在另一个终端测试 API
 curl http://localhost:8080/api/v1/health
@@ -104,23 +104,23 @@ curl http://localhost:8080/api/v1/health
 kubectl apply -f deploy/client-daemonset.yaml
 
 # 查看 DaemonSet 状态
-kubectl get daemonset -n toolbox k8snet-checker-client
+kubectl get daemonset -n kube-system k8snet-checker-client
 
 # 查看所有客户端 Pod
-kubectl get pods -n toolbox -l app=k8snet-checker-client -o wide
+kubectl get pods -n kube-system -l app=k8snet-checker-client -o wide
 ```
 
 #### 2.2 验证客户端
 
 ```bash
 # 查看客户端日志
-kubectl logs -n toolbox -l app=k8snet-checker-client --tail=50
+kubectl logs -n kube-system -l app=k8snet-checker-client --tail=50
 
 # 查看特定节点的客户端日志
-kubectl logs -n toolbox <client-pod-name>
+kubectl logs -n kube-system <client-pod-name>
 
 # 检查客户端健康状态
-kubectl exec -n toolbox <client-pod-name> -- wget -qO- http://localhost:6100/health
+kubectl exec -n kube-system <client-pod-name> -- wget -qO- http://localhost:6100/health
 ```
 
 ## 配置说明
@@ -153,7 +153,7 @@ env:
 ```yaml
 env:
 - name: SERVER_URL
-  value: "http://k8snet-checker-server.toolbox.svc.cluster.local:8080"
+  value: "http://k8snet-checker-server.kube-system.svc.cluster.local:8080"
 - name: HEARTBEAT_INTERVAL
   value: "5"               # 心跳间隔（秒）
 - name: TEST_PORT
@@ -232,7 +232,7 @@ kubectl create secret docker-registry registry-secret \
   --docker-username=<username> \
   --docker-password=<password> \
   --docker-email=<email> \
-  -n toolbox
+  -n kube-system
 ```
 
 ## 验证部署
@@ -241,36 +241,36 @@ kubectl create secret docker-registry registry-secret \
 
 ```bash
 # 检查所有组件状态
-kubectl get all -n toolbox | grep network-checker
+kubectl get all -n kube-system | grep network-checker
 
 # 检查服务器 Pod
-kubectl get pods -n toolbox -l app=network-checker-server
+kubectl get pods -n kube-system -l app=network-checker-server
 
 # 检查客户端 Pod（应该每个节点一个）
-kubectl get pods -n toolbox -l app=network-checker-client -o wide
+kubectl get pods -n kube-system -l app=network-checker-client -o wide
 
 # 检查 Pod 详细信息
-kubectl describe pod -n toolbox <pod-name>
+kubectl describe pod -n kube-system <pod-name>
 ```
 
 ### 2. 检查日志
 
 ```bash
 # 查看服务器日志
-kubectl logs -n toolbox -l app=network-checker-server -f
+kubectl logs -n kube-system -l app=network-checker-server -f
 
 # 查看客户端日志
-kubectl logs -n toolbox -l app=network-checker-client --tail=100
+kubectl logs -n kube-system -l app=network-checker-client --tail=100
 
 # 查看特定 Pod 日志
-kubectl logs -n toolbox <pod-name> -f
+kubectl logs -n kube-system <pod-name> -f
 ```
 
 ### 3. 测试 API
 
 ```bash
 # 端口转发
-kubectl port-forward -n toolbox svc/k8snet-checker-server 8080:8080 &
+kubectl port-forward -n kube-system svc/k8snet-checker-server 8080:8080 &
 
 # 测试健康检查
 curl http://localhost:8080/api/v1/health
@@ -309,7 +309,7 @@ curl http://localhost:8080/api/v1/test-results/service | jq .
 
 ```bash
 # 查看服务器日志中的报告
-kubectl logs -n toolbox -l app=network-checker-server | grep -A 50 "Network Connectivity Report"
+kubectl logs -n kube-system -l app=network-checker-server | grep -A 50 "Network Connectivity Report"
 ```
 
 ## 更新部署
@@ -320,16 +320,16 @@ kubectl logs -n toolbox -l app=network-checker-server | grep -A 50 "Network Conn
 # 更新服务器镜像
 kubectl set image deployment/k8snet-checker-server \
   server=k8snet-checker-server:v1.1.0 \
-  -n toolbox
+  -n kube-system
 
 # 更新客户端镜像
 kubectl set image daemonset/k8snet-checker-client \
   client=k8snet-checker-client:v1.1.0 \
-  -n toolbox
+  -n kube-system
 
 # 查看更新状态
-kubectl rollout status deployment/k8snet-checker-server -n toolbox
-kubectl rollout status daemonset/k8snet-checker-client -n toolbox
+kubectl rollout status deployment/k8snet-checker-server -n kube-system
+kubectl rollout status daemonset/k8snet-checker-client -n kube-system
 ```
 
 ### 更新配置
@@ -340,21 +340,21 @@ kubectl apply -f deploy/server-deployment.yaml
 kubectl apply -f deploy/client-daemonset.yaml
 
 # 或者直接编辑
-kubectl edit deployment k8snet-checker-server -n toolbox
-kubectl edit daemonset k8snet-checker-client -n toolbox
+kubectl edit deployment k8snet-checker-server -n kube-system
+kubectl edit daemonset k8snet-checker-client -n kube-system
 ```
 
 ### 回滚部署
 
 ```bash
 # 查看历史版本
-kubectl rollout history deployment/k8snet-checker-server -n toolbox
+kubectl rollout history deployment/k8snet-checker-server -n kube-system
 
 # 回滚到上一个版本
-kubectl rollout undo deployment/k8snet-checker-server -n toolbox
+kubectl rollout undo deployment/k8snet-checker-server -n kube-system
 
 # 回滚到指定版本
-kubectl rollout undo deployment/k8snet-checker-server --to-revision=2 -n toolbox
+kubectl rollout undo deployment/k8snet-checker-server --to-revision=2 -n kube-system
 ```
 
 ## 卸载
@@ -371,28 +371,28 @@ kubectl delete -f deploy/server-service.yaml
 kubectl delete -f deploy/server-deployment.yaml
 
 # 验证删除
-kubectl get all -n toolbox | grep k8snet-checker
+kubectl get all -n kube-system | grep k8snet-checker
 ```
 
 ### 仅删除客户端
 
 ```bash
 # 删除客户端 DaemonSet
-kubectl delete daemonset k8snet-checker-client -n toolbox
+kubectl delete daemonset k8snet-checker-client -n kube-system
 
 # 验证删除
-kubectl get pods -n toolbox -l app=k8snet-checker-client
+kubectl get pods -n kube-system -l app=k8snet-checker-client
 ```
 
 ### 仅删除服务器
 
 ```bash
 # 删除服务器 Deployment 和 Service
-kubectl delete deployment k8snet-checker-server -n toolbox
-kubectl delete service k8snet-checker-server -n toolbox
+kubectl delete deployment k8snet-checker-server -n kube-system
+kubectl delete service k8snet-checker-server -n kube-system
 
 # 验证删除
-kubectl get all -n toolbox -l app=k8snet-checker-server
+kubectl get all -n kube-system -l app=k8snet-checker-server
 ```
 
 ## 故障排查
@@ -405,16 +405,16 @@ kubectl get all -n toolbox -l app=k8snet-checker-server
 
 ```bash
 # 查看 Pod 状态
-kubectl get pods -n toolbox -l app=k8snet-checker-server
+kubectl get pods -n kube-system -l app=k8snet-checker-server
 
 # 查看 Pod 详细信息
-kubectl describe pod -n toolbox <server-pod-name>
+kubectl describe pod -n kube-system <server-pod-name>
 
 # 查看日志
-kubectl logs -n toolbox <server-pod-name>
+kubectl logs -n kube-system <server-pod-name>
 
 # 查看上一次运行的日志
-kubectl logs -n toolbox <server-pod-name> --previous
+kubectl logs -n kube-system <server-pod-name> --previous
 ```
 
 **常见原因**:
@@ -425,13 +425,13 @@ kubectl logs -n toolbox <server-pod-name> --previous
 **解决方案**:
 ```bash
 # 检查端口占用
-kubectl get svc -n toolbox | grep 8080
+kubectl get svc -n kube-system | grep 8080
 
 # 增加资源限制
-kubectl edit deployment k8snet-checker-server -n toolbox
+kubectl edit deployment k8snet-checker-server -n kube-system
 
 # 检查镜像
-kubectl describe pod -n toolbox <server-pod-name> | grep -A 5 "Events"
+kubectl describe pod -n kube-system <server-pod-name> | grep -A 5 "Events"
 ```
 
 ### 问题 2: 客户端 Pod 无法启动
@@ -442,22 +442,22 @@ kubectl describe pod -n toolbox <server-pod-name> | grep -A 5 "Events"
 
 ```bash
 # 查看所有客户端 Pod
-kubectl get pods -n toolbox -l app=k8snet-checker-client -o wide
+kubectl get pods -n kube-system -l app=k8snet-checker-client -o wide
 
 # 查看失败的 Pod
-kubectl describe pod -n toolbox <client-pod-name>
+kubectl describe pod -n kube-system <client-pod-name>
 
 # 查看日志
-kubectl logs -n toolbox <client-pod-name>
+kubectl logs -n kube-system <client-pod-name>
 
 # 检查环境变量
-kubectl exec -n toolbox <client-pod-name> -- env | grep -E "NODE_IP|POD_IP|SERVER_URL"
+kubectl exec -n kube-system <client-pod-name> -- env | grep -E "NODE_IP|POD_IP|SERVER_URL"
 
 # 测试服务器连接
-kubectl exec -n toolbox <client-pod-name> -- wget -qO- http://k8snet-checker-server.toolbox.svc.cluster.local:8080/api/v1/health
+kubectl exec -n kube-system <client-pod-name> -- wget -qO- http://k8snet-checker-server.kube-system.svc.cluster.local:8080/api/v1/health
 
 # 检查安全上下文
-kubectl get daemonset -n toolbox k8snet-checker-client -o yaml | grep -A 10 securityContext
+kubectl get daemonset -n kube-system k8snet-checker-client -o yaml | grep -A 10 securityContext
 ```
 
 ### 问题 3: 客户端数量不正确
@@ -471,10 +471,10 @@ kubectl get daemonset -n toolbox k8snet-checker-client -o yaml | grep -A 10 secu
 kubectl get nodes | wc -l
 
 # 查看客户端 Pod 数量
-kubectl get pods -n toolbox -l app=k8snet-checker-client | wc -l
+kubectl get pods -n kube-system -l app=k8snet-checker-client | wc -l
 
 # 查看 DaemonSet 状态
-kubectl get daemonset -n toolbox k8snet-checker-client
+kubectl get daemonset -n kube-system k8snet-checker-client
 ```
 
 **常见原因**:
@@ -489,10 +489,10 @@ kubectl get daemonset -n toolbox k8snet-checker-client
 kubectl describe nodes | grep -A 5 Taints
 
 # 检查 DaemonSet 的 tolerations
-kubectl get daemonset k8snet-checker-client -n toolbox -o yaml | grep -A 5 tolerations
+kubectl get daemonset k8snet-checker-client -n kube-system -o yaml | grep -A 5 tolerations
 
 # 调整缓存过期时间
-kubectl set env deployment/k8snet-checker-server CACHE_KEY_SECOND=30 -n toolbox
+kubectl set env deployment/k8snet-checker-server CACHE_KEY_SECOND=30 -n kube-system
 ```
 
 ### 问题 4: 网络测试失败
@@ -507,8 +507,8 @@ curl http://localhost:8080/api/v1/test-results/hosts | jq .
 curl http://localhost:8080/api/v1/test-results/pods | jq .
 
 # 手动测试网络连通性
-kubectl exec -n toolbox <client-pod-name> -- ping -c 3 <target-ip>
-kubectl exec -n toolbox <client-pod-name> -- nc -zv <target-ip> 22
+kubectl exec -n kube-system <client-pod-name> -- ping -c 3 <target-ip>
+kubectl exec -n kube-system <client-pod-name> -- nc -zv <target-ip> 22
 ```
 
 **常见原因**:
@@ -520,7 +520,7 @@ kubectl exec -n toolbox <client-pod-name> -- nc -zv <target-ip> 22
 
 ```bash
 # 检查安全上下文
-kubectl get daemonset k8snet-checker-client -n toolbox -o yaml | grep -A 10 securityContext
+kubectl get daemonset k8snet-checker-client -n kube-system -o yaml | grep -A 10 securityContext
 
 # 确保有 NET_RAW 和 NET_ADMIN 权限
 # 已在 client-daemonset.yaml 中配置
@@ -537,27 +537,27 @@ iptables -L -n | grep -E "ICMP|22"
 
 ```bash
 # 检查 Service
-kubectl get svc -n toolbox k8snet-checker-server
+kubectl get svc -n kube-system k8snet-checker-server
 
 # 检查端点
-kubectl get endpoints -n toolbox k8snet-checker-server
+kubectl get endpoints -n kube-system k8snet-checker-server
 
 # 测试 Service 内部访问
-kubectl run -it --rm debug --image=alpine --restart=Never -n toolbox -- sh
+kubectl run -it --rm debug --image=alpine --restart=Never -n kube-system -- sh
 # 在 Pod 内执行
-wget -qO- http://k8snet-checker-server.toolbox.svc.cluster.local:8080/api/v1/health
+wget -qO- http://k8snet-checker-server.kube-system.svc.cluster.local:8080/api/v1/health
 ```
 
 **解决方案**:
 
 ```bash
 # 重新创建 Service
-kubectl delete svc k8snet-checker-server -n toolbox
+kubectl delete svc k8snet-checker-server -n kube-system
 kubectl apply -f deploy/server-service.yaml
 
 # 检查 Service 选择器
-kubectl get svc k8snet-checker-server -n toolbox -o yaml | grep -A 3 selector
-kubectl get pods -n toolbox -l app=network-checker-server --show-labels
+kubectl get svc k8snet-checker-server -n kube-system -o yaml | grep -A 3 selector
+kubectl get pods -n kube-system -l app=network-checker-server --show-labels
 ```
 
 ## 监控和告警
@@ -571,7 +571,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: network-checker-server
-  namespace: toolbox
+  namespace: kube-system
 spec:
   selector:
     matchLabels:

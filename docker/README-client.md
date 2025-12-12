@@ -1,8 +1,10 @@
 # K8s Network Checker - Client
 
+[![GitHub](https://img.shields.io/badge/GitHub-k8snet--checker-blue?logo=github)](https://github.com/yezihack/k8snet-checker)
 [![Docker Image Version](https://img.shields.io/docker/v/sgfoot/k8snet-checker-client?sort=semver)](https://hub.docker.com/r/sgfoot/k8snet-checker-client)
 [![Docker Image Size](https://img.shields.io/docker/image-size/sgfoot/k8snet-checker-client/latest)](https://hub.docker.com/r/sgfoot/k8snet-checker-client)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sgfoot/k8snet-checker-client)](https://hub.docker.com/r/sgfoot/k8snet-checker-client)
+[![License](https://img.shields.io/github/license/yezihack/k8snet-checker)](https://github.com/yezihack/k8snet-checker/blob/main/LICENSE)
 
 K8s Network Checker 的客户端组件，通过 DaemonSet 在每个节点上运行，执行网络连通性测试并上报结果。
 
@@ -12,30 +14,12 @@ K8s Network Checker 的客户端组件，通过 DaemonSet 在每个节点上运�
 
 ```bash
 # 使用 Helm（推荐）
-helm install k8snet-checker \
-  https://github.com/yezihack/k8snet-checker/releases/download/v0.1.0/k8snet-checker-0.1.0.tgz \
-  -n kube-system --create-namespace
+helm repo add k8snet-checker https://yezihack.github.io/k8snet-checker
+helm repo update
+helm install k8snet-checker k8snet-checker/k8snet-checker -n kube-system
 
 # 或使用 kubectl
 kubectl apply -f https://raw.githubusercontent.com/yezihack/k8snet-checker/main/deploy/all-in-one.yaml
-```
-
-### 单独运行（不推荐）
-
-客户端需要在 Kubernetes 环境中运行，需要访问节点网络和 Pod 网络。
-
-```bash
-docker run -d \
-  --name k8snet-checker-client \
-  --network host \
-  -e NODE_IP=192.168.1.100 \
-  -e POD_IP=10.244.0.10 \
-  -e POD_NAME=test-client \
-  -e NAMESPACE=default \
-  -e SERVER_URL=http://server:8080 \
-  --cap-add=NET_RAW \
-  --cap-add=NET_ADMIN \
-  sgfoot/k8snet-checker-client:latest
 ```
 
 ## 环境变量
@@ -115,14 +99,17 @@ curl http://localhost:6100/health
 ## 资源要求
 
 **最小配置**：
+
 - CPU: 25m
 - Memory: 32Mi
 
 **推荐配置**：
+
 - CPU: 50m
 - Memory: 64Mi
 
 **生产环境**：
+
 - CPU: 100m
 - Memory: 128Mi
 
@@ -313,8 +300,8 @@ MIT License
 
 ## 联系方式
 
-- GitHub: https://github.com/yezihack/k8snet-checker
-- Issues: https://github.com/yezihack/k8snet-checker/issues
+- GitHub: <https://github.com/yezihack/k8snet-checker>
+- Issues: <https://github.com/yezihack/k8snet-checker/issues>
 
 ## 相关镜像
 

@@ -11,21 +11,8 @@
 
 ## 快速部署
 
-### 方式一：使用统一部署文件
-
 ```bash
 kubectl apply -f deploy/all-in-one.yaml
-```
-
-### 方式二：分别部署各个组件
-
-```bash
-# 部署 Server
-kubectl apply -f deploy/server-deployment.yaml
-kubectl apply -f deploy/server-service.yaml
-
-# 部署 Client
-kubectl apply -f deploy/client-daemonset.yaml
 ```
 
 ## 验证部署
@@ -34,23 +21,23 @@ kubectl apply -f deploy/client-daemonset.yaml
 
 ```bash
 # 检查 Server Pod
-kubectl get pods -n kube-system -l app=pod-probe-server
+kubectl get pods -n kube-system -l app=k8snet-checker-server
 
 # 检查 Client Pod（应该在每个节点上都有一个）
-kubectl get pods -n kube-system -l app=pod-probe-client -o wide
+kubectl get pods -n kube-system -l app=k8snet-checker-client -o wide
 ```
 
 ### 检查 Service
 
 ```bash
-kubectl get svc -n kube-system pod-probe-server
+kubectl get svc -n kube-system k8snet-checker-server
 ```
 
 ### 查看日志
 
 ```bash
 # 查看 Server 日志
-kubectl logs -n kube-system -l app=pod-probe-server -f
+kubectl logs -n kube-system -l app=k8snet-checker-server -f
 
 # 查看 Client 日志（指定某个 Pod）
 kubectl logs -n kube-system <client-pod-name> -f
@@ -131,11 +118,6 @@ Client DaemonSet 配置了以下容忍度，确保可以在所有节点上运行
 ```bash
 # 删除所有资源
 kubectl delete -f deploy/all-in-one.yaml
-
-# 或分别删除
-kubectl delete -f deploy/client-daemonset.yaml
-kubectl delete -f deploy/server-service.yaml
-kubectl delete -f deploy/server-deployment.yaml
 ```
 
 ## 自定义配置
