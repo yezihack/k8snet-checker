@@ -87,6 +87,22 @@ docker build -t sgfoot/k8snet-checker-client:latest -f Dockerfile.client .
 
 详细的部署说明请参考 [DEPLOY.md](DEPLOY.md)
 
+#### 方法 1: 使用 Helm（推荐）
+
+```bash
+# 从 GitHub Release 安装
+helm install k8snet-checker \
+  https://github.com/yezihack/k8snet-checker/releases/download/v0.1.0/k8snet-checker-0.1.0.tgz \
+  -n kube-system --create-namespace
+
+# 或者从本地安装
+git clone https://github.com/yezihack/k8snet-checker.git
+cd k8snet-checker
+helm install k8snet-checker ./chart/k8snet-checker -n kube-system
+```
+
+#### 方法 2: 使用 kubectl
+
 ```bash
 # 部署服务器
 kubectl apply -f deploy/server-deployment.yaml
